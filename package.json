@@ -1,0 +1,28 @@
+﻿{
+	"name": "dcms",
+	"version": "0.0.1",
+	"description": "dcms by pkokki",
+	"author": "pkokki",
+	"private": true,
+	"scripts": {
+		"start": "nodemon ./src/app.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/pkokki/dcms.git"
+	},
+	"bugs": { 
+		"url": "https://github.com/pkokki/dcms/issues"
+	},
+	"homepage": "https://github.com/pkokki/dcms",
+	"dependencies": {
+		"express": "~4.12.3",
+		"jade": "~1.9.2",
+		"mongoose": "~4.0.2",
+		"morgan": "~1.5.2",
+		"body-parser": "~1.12.3",
+		"method-override": "~2.3.2"
+	},
+	"devDependencies": {
+	}
+}
