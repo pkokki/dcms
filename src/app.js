@@ -13,7 +13,7 @@ var routes = require('./server/routes');
 var app = module.exports = express();
 
 // connect to mongoDB database
-//mongoose.connect('mongodb://node:nodeuser@mongo.onmodulus.net:27017/uwO3mypu');
+mongoose.connect('mongodb://localhost:27017/dcms_console');
 
 // ********************** Configuration ********************** 
 app.use(express.static(__dirname + '/clients'));		// set the static files location
