@@ -1,1 +1,45 @@
-﻿home
+﻿<div layout="row">
+	
+	<div layout="column">
+		<h2>Register</h2>
+		<md-input-container>
+		  <label>Username</label>
+		  <input ng-model="tenant.username" required>
+		</md-input-container>
+		<md-input-container>
+		  <label>Email</label>
+		  <input ng-model="tenant.email" required>
+		</md-input-container>
+		<md-input-container>
+		  <label>Fullname</label>
+		  <input ng-model="tenant.fullname" required>
+		</md-input-container>
+		<md-input-container>
+		  <label>Company</label>
+		  <input ng-model="tenant.company" required>
+		</md-input-container>
+		<md-input-container>
+		  <label>Password</label>
+		  <input ng-model="tenant.password" type="password" required>
+		</md-input-container>
+		<md-input-container>
+		  <label>Confirm password</label>
+		  <input ng-model="tenant.confirm" type="password" required>
+		</md-input-container>
+		<md-button class="md-raised md-primary" ng-click=register(tenant)>Register</md-button>
+	</div>
+	
+	<div layout="column">
+		<h2>Sign in</h2>
+		<md-input-container>
+		  <label>Email</label>
+		  <input ng-model="credentials.email" required>
+		</md-input-container>
+		<md-input-container>
+		  <label>Password</label>
+		  <input ng-model="credentials.password" type="password" required>
+		</md-input-container>
+		<md-button class="md-raised md-primary" ng-click=signin(credentials)>Sign in</md-button>
+		<p><a ng-href="#">Forgot password?</a></p>
+	</div>
+</div>

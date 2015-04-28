@@ -36,7 +36,10 @@ app.set('view engine', 'jade');
 
 // ********************** TEMP MODELS ********************** 
 var Tenant = mongoose.model('Tenant', {
-	name : String
+	username : String,
+	email : String,
+	fullname : String,
+	company : String,
 });
 
 // ********************** TEMP API ROUTES ********************** 
@@ -48,8 +51,12 @@ app.get('/api/tenants', function(req, res) {
 	});
 });
 app.post('/api/tenants', function(req, res) {
+	var pwd = req.body.password;
 	var payload = {
-		name : req.body.text,
+		username : req.body.username,
+		email : req.body.email,
+		fullname : req.body.fullname,
+		company : req.body.company,
 		active : false
 	};
 	var next = function(err, tenant) {

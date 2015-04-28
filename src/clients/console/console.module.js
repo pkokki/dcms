@@ -2,6 +2,7 @@
 		'ui.router', 
 		'ngMaterial',
 		'ngMessages',
+		'atlas',
 	])
 	.config(['$stateProvider', '$urlRouterProvider', '$mdIconProvider', function ($stateProvider, $urlRouterProvider, $mdIconProvider) {
 		
@@ -17,7 +18,7 @@
 			})
 		;
 	}])
-	.service('tenantApiClient', ['$http', function($http) {
+	.service('tenantOrgModel', ['$http', function($http) {
 		var baseApiUri = '/api/tenants';
 		
 		var queryTenants = function(success, error) {
@@ -49,12 +50,18 @@
 		};
 		console.info('Console started');
 	}])
-	.controller('homeController', ['$scope', 'tenantApiClient', function($scope, tenantApiClient) {
-		tenantApiClient.query(
-			function(tenants) {
-				$scope.tenants = tenants;
-			}, 
-			function(data) {
-			});
+	.controller('homeController', ['$scope', 'tenantOrgModel', 'accountClient', function($scope, tenantOrgModel, accountClient) {
+		$scope.register = function(tenant) {
+			console.log('$scope.register', tenant);
+			accountClient.create(tenant, 'pwd', { ident: 1}, { orgmodel: 1})
+				.then(function(data) { 
+					console.log('$scope.register SUCCESS', data); 
+				}, function(data) { 
+					console.log('$scope.register ERROR', data); 
+				});
+		};
+		$scope.signin = function(credentials) {
+			accountClient.create();
+		};
 	}])
 ;
