@@ -220,6 +220,10 @@
 				 * @description 
 				 * Create a user resource in org model API and the respective account in the identity API.
 				 *
+				 * ```js
+				 * service.create({username: 'jane', email: 'jane@example.com'}, 'secret').then(fn1, fn2);
+				 * ```
+				 *
 				 * @param {Object=} user The user information to create. It has the following properties:
 				 *   - **username** – `{string}` – (default: null) The username
 				 *   - **firstname** – `{string}` – (default: null) The firstname

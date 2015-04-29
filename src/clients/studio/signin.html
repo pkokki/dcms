@@ -1,0 +1,18 @@
+﻿<div>
+	<h2>Sign in</h2>
+	<md-input-container>
+	  <label>Email</label>
+	  <input ng-model="credentials.email" required>
+	</md-input-container>
+	<md-input-container>
+	  <label>Password</label>
+	  <input ng-model="credentials.password" type="password" required>
+	</md-input-container>
+	<md-button class="md-raised md-primary" ng-click="signin(credentials)">Sign in</md-button>
+	<p><a ng-href="#/forgotPassword">Forgot your password?</a></p>
+	
+	<h3>Did you sign up with your Google Account?</h3>
+	<md-button class="md-raised" ng-click="googleSignin()">Sign in with Google</md-button>
+	
+	<p>Don’t have an account? <a ng-href="#/register">Register for an account.</a></p>
+</div>

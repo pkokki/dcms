@@ -1,0 +1,12 @@
+﻿<div>
+	<h2>Sign in</h2>
+	<md-input-container>
+	  <label>Username</label>
+	  <input ng-model="credentials.username" required>
+	</md-input-container>
+	<md-input-container>
+	  <label>Password</label>
+	  <input ng-model="credentials.password" type="password" required>
+	</md-input-container>
+	<md-button class="md-raised md-primary" ng-click="signin(credentials)">Sign in</md-button>
+</div>

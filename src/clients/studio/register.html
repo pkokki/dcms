@@ -1,0 +1,40 @@
+﻿<div>
+	<h2>Register new account</h2>
+	<form name="registerForm">
+		<p style="color:#FF0000" ng-show="errorMsg">{{errorMsg}}</p>
+		<md-input-container>
+		  <label>Username</label>
+		  <input ng-model="tenant.username" required>
+		</md-input-container>
+		<md-input-container>
+		  <label>Email</label>
+		  <input ng-model="tenant.email" required>
+		</md-input-container>
+		<md-input-container>
+		  <label>Firstname</label>
+		  <input ng-model="tenant.firstname">
+		</md-input-container>
+		<md-input-container>
+		  <label>Lastname</label>
+		  <input ng-model="tenant.lastname">
+		</md-input-container>
+		<md-input-container>
+		  <label>Company</label>
+		  <input ng-model="tenant.company">
+		</md-input-container>
+		<md-input-container>
+		  <label>Password</label>
+		  <input ng-model="tenant.password" type="password" required>
+		</md-input-container>
+		<md-input-container>
+		  <label>Confirm password</label>
+		  <input ng-model="tenant.confirm" type="password" required>
+		</md-input-container>
+		<md-button class="md-raised md-primary" ng-disabled="registerForm.$invalid || tenant.password != tenant.confirm"  ng-click=register(tenant)>Register</md-button>
+	</form>
+	
+	<h3>Do you have a Google Account?</h3>
+	<md-button class="md-raised" ng-click=register()>Sign up with Google</md-button>
+	
+	<p>Already have an account? <a href="#/signin">Sign in</a>.</p>
+</div>

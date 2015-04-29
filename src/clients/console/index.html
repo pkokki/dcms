@@ -10,7 +10,7 @@
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=RobotoDraft:400,500,700,400italic" />
 		
 	</head>
-	<body layout="column" style="background-color:DDFFDD">
+	<body layout="column" style="background-color:DDDDFF">
 		<div layout="row" class="md-default-theme" flex>
 			<md-sidenav layout="column" class="md-sidenav-left md-whiteframe-z2" md-component-id="left" md-is-locked-open="$mdMedia('gt-lg')">
 				<md-toolbar>
@@ -23,13 +23,14 @@
 				</md-content>
 			</md-sidenav>
 			<div layout="column" flex>
-				<md-toolbar layout="row">
-					<div class="md-toolbar-tools">
-						<md-button class="md-icon-button" aria-label="sidebar" title="sidebar" ng-click="toggleMenu('left')">
-							<md-icon md-svg-icon="core:menu"></md-icon>
-						</md-button>
-						<h2 flex>dcms :: console</h2>
-					</div>
+				<md-toolbar class="md-toolbar-tools">
+					<md-button class="md-icon-button" aria-label="sidebar" title="sidebar" ng-click="toggleMenu('left')">
+						<md-icon md-svg-icon="core:menu"></md-icon>
+					</md-button>
+					<h2 flex>dcms :: console</h2>
+					<md-button class="md-icon-button" aria-label="home" title="home" ng-click="noop()" ui-sref="home">
+						<md-icon md-svg-icon="core:home"></md-icon>
+					</md-button>
 				</md-toolbar>
 				<md-content ui-view layout="column" flex layout-padding>
 					<!-- ui-view placeholder -->

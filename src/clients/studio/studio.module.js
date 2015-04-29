@@ -1,4 +1,4 @@
-﻿angular.module('console', [
+﻿angular.module('studio', [
 		'ui.router', 
 		'ngMaterial',
 		'ngMessages',
@@ -14,7 +14,19 @@
 			.state('home', {
 				url: '/',
 				templateUrl: 'home.html',
-				controller: 'homeController'
+				controller: 'homeController',
+				allowAnonymous: true
+			})
+			.state('register', {
+				url: '/register',
+				templateUrl: 'register.html',
+				controller: 'registerController',
+				allowAnonymous: true
+			})
+			.state('registerThanks', {
+				url: '/registerThanks',
+				template: '<h1>Thank you!</h1><p>You will receive a message with further info after registration approval.</p><p><a href="#/home">Home</a></p>',
+				allowAnonymous: true
 			})
 			.state('signin', {
 				url: '/signin',
@@ -22,10 +34,21 @@
 				controller: 'signinController',
 				allowAnonymous: true
 			})
-			.state('tenants', {
-				url: '/tenants',
-				templateUrl: 'tenants.html',
-				controller: 'tenantsController'
+			.state('forgotPassword', {
+				url: '/forgotPassword',
+				templateUrl: 'forgotPassword.html',
+				controller: 'forgotPasswordController',
+				allowAnonymous: true
+			})
+			.state('dashboard', {
+				url: '/dashboard',
+				templateUrl: 'dashboard.html',
+				controller: 'dashboardController'
+			})
+			.state('userProfile', {
+				url: '/userProfile',
+				templateUrl: 'userProfile.html',
+				controller: 'userProfileController'
 			})
 		;
 	}])
@@ -40,7 +63,7 @@
 	}])
 	.factory('spa', ['$state', function($state) {
 		var toRoute = null;
-		var user = null;
+		var tenant = null;
 		return {
 			suspendRoute: function(toState, toParams) {
 				toRoute = {
@@ -54,14 +77,14 @@
 					toRoute = null;
 				}
 				else {
-					$state.go('home');
+					$state.go('dashboard');
 				}
 			},
-			setUser: function(data) {
-				user = data;
+			setTenant: function(data) {
+				tenant = data;
 			},
 			isSignedOn: function() {
-				return user != null;
+				return tenant != null;
 			},
 		};
 	}])
@@ -73,11 +96,6 @@
 			{ id: 3, username: 'var1', company: 'VAR1 Ltd', email: 'john@var.com', active: true },
 		];
 		
-		var queryTenants = function() {
-			return $q(function(resolve, reject) {
-				resolve(tenants);
-			});
-		};
 		var getTenant = function(id) {
 			return $q(function(resolve, reject) {
 				var tenant = null;
@@ -98,47 +116,25 @@
 				resolve(tenantData);
 			});
 		};
-		var activateTenant = function(id) {
-			return $q(function(resolve, reject) {
-				getTenant(id).then(function(tenant) {
-					if (tenant != null) {
-						tenant.active = true;
-						resolve(tenant);
-					}
-					else {
-						reject('Tenant not exists.');
-					}
-				});
-			});
-		};
-		var deactivateTenant = function() {
-			return $q(function(resolve, reject) {
-				getTenant(id).then(function(tenant) {
-					if (tenant != null) {
-						tenant.active = false;
-					}
-					resolve(tenant);
-				});
-			});
-		};
 		var theService = {
-			queryTenants: queryTenants,
 			getTenant: getTenant,
 			registerTenant: registerTenant,
-			activateTenant: activateTenant,
-			deactivateTenant: deactivateTenant,
 		};
 		return theService;
 	}])
-	.factory('signinService', ['$q', function($q) {
+	.factory('tenantSigninService', ['$q', 'tenantService', function($q, tenantService) {
 		var theService = {
 			signin: function(credentials) {
 				return $q(function(resolve, reject) {
-					if (credentials && credentials.username) {
-						var user = {
-							username: credentials.username
-						};
-						resolve(user);
+					if (credentials && credentials.email && credentials.password) {
+						tenantService.getTenant(credentials.email).then(function(tenant) {
+							if (tenant)
+								resolve(tenant);
+							else
+								reject('tenant not found');
+						}, function(data) {
+							reject('error getting tenant');
+						});
 					}
 					else {
 						reject('invalid credentials');
@@ -150,20 +146,36 @@
 	}])
 	.controller('appController', ['$scope', '$mdSidenav', '$state', 'spa', function($scope, $mdSidenav, $state, spa) {
 		$scope.goHome = function() {
-			$state.go('home');
+			$state.go('dashboard');
 		};
 		$scope.hasUser = spa.isSignedOn;
 
+		$scope.goUserProfile = function() {
+			$state.go('userProfile');
+		};
 		$scope.toggleMenu = function(id) {
 			$mdSidenav(id).toggle();
 		};
-		console.info('Console started');
+		console.info('Studio started');
 	}])
 	.controller('homeController', [function() {}])
-	.controller('signinController', ['$scope', '$state', 'spa', 'signinService', function($scope, $state, spa, signinService) {
+	.controller('registerController', ['$scope', '$state', 'tenantService', function($scope, $state, tenantService) {
+		$scope.register = function(tenantData) {
+			tenantService.registerTenant(tenantData)
+				.then(function(data) { 
+					$state.go('registerThanks');
+				}, function(data) { 
+					$scope.errorMsg = data;
+				});
+		};
+		$scope.registerWithGoogle = function() {
+			console.warn('registerController.registerWithGoogle: Not implemented!');
+		};
+	}])
+	.controller('signinController', ['$scope', '$state', 'spa', 'tenantSigninService', function($scope, $state, spa, tenantSigninService) {
 		$scope.signin = function(credentials) {
-			signinService.signin(credentials).then(function(tenant) {
-				spa.setUser(tenant);
+			tenantSigninService.signin(credentials).then(function(tenant) {
+				spa.setTenant(tenant);
 				spa.resumeRoute();
 			}, function(data) {
 				$scope.errorMsg = data;
@@ -173,6 +185,7 @@
 			console.warn('signinController.googleSignin: Not implemented!');
 		};
 	}])
-	.controller('tenantsController', [function() {}])
-	
+	.controller('forgotPasswordController', [function() {}])
+	.controller('dashboardController', [function() {}])
+	.controller('userProfileController', [function() {}])
 ;
