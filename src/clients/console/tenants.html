@@ -1,1 +1,80 @@
 ﻿<h2>tenants</h2>
+
+<div layout="column">
+    <div layout="row" layout-align="center center">
+        <h3>Catalog</h3>
+        <div flex></div>
+        <md-button class="md-icon-button" aria-label="add" title="add" ng-click="addTenant()">
+            <md-icon md-svg-icon="core:add_circle_outline"></md-icon>
+        </md-button>
+        <md-button class="md-icon-button" aria-label="actions" title="actions" ng-click="showActions()">
+            <md-icon md-svg-icon="core:more_vert"></md-icon>
+        </md-button>
+    </div>
+    <table style="width:100%">
+        <thead>
+            <tr>
+                <th>&nbsp;</th>
+                <th>username</th>
+                <th>name</th>
+                <th>company</th>
+                <th>email</th>
+                <th>active</th>
+                <th>admin</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="item in data.Items">
+                <td>
+                    <div layout="row" layout-align="center center">
+                        <md-checkbox aria-label="select" ng-model="selectFlags[$index]"></md-checkbox>
+                    </div>
+                </td>
+                <td>{{item.username}}</td>
+                <td>{{item.firstname}} {{item.lastname}}</td>
+                <td>{{item.company}}</td>
+                <td>{{item.email}}</td>
+                <td>
+                    <div layout="row" layout-align="center center">
+                        <md-icon md-svg-icon="core:{{item.active ? 'check_box' : 'check_box_outline_blank'}}"></md-icon>
+                    </div>
+                </td>
+                <td>
+                    <div layout="row" layout-align="center center">
+                        <md-icon md-svg-icon="core:{{item.admin ? 'check_box' : 'check_box_outline_blank'}}"></md-icon>
+                    </div>
+                </td>
+                <td>
+                    <div ui-sref="tenantSettings({ id: item.id })">
+                        <md-button class="md-icon-button" aria-label="service settings" title="service settings">
+                            <md-icon md-svg-icon="core:{{item.settings ? 'cloud_done' : 'cloud_off'}}"></md-icon>
+                        </md-button>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div layout="row" layout-align="center center" layout-padding>
+        <div flex></div>
+        <div>
+            Rows per page: {{data.PageSize}}
+            &nbsp;&nbsp;&nbsp;
+            {{data.Start + 1}}-{{data.End + 1}} of {{data.Total}}
+
+            <md-button class="md-icon-button" aria-label="first" title="first" ng-click="first()">
+                <md-icon md-svg-icon="core:skip_previous"></md-icon>
+            </md-button>
+            <md-button class="md-icon-button" aria-label="previous" title="previous" ng-click="prev()">
+                <md-icon md-svg-icon="core:before"></md-icon>
+            </md-button>
+            <md-button class="md-icon-button" aria-label="next" title="next" ng-click="next()">
+                <md-icon md-svg-icon="core:next"></md-icon>
+            </md-button>
+            <md-button class="md-icon-button" aria-label="last" title="last" ng-click="last()">
+                <md-icon md-svg-icon="core:skip_next"></md-icon>
+            </md-button>
+
+        </div>
+    </div>
+</div>

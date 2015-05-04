@@ -1,15 +1,15 @@
 ﻿angular.module('console', [
-		'ui.router', 
+		'ui.router',
 		'ngMaterial',
 		'ngMessages',
 		'atlas',
 	])
 	.config(['$stateProvider', '$urlRouterProvider', '$mdIconProvider', function ($stateProvider, $urlRouterProvider, $mdIconProvider) {
-		
+
 		$mdIconProvider.iconSet('core', '../assets/img/core-icons.svg', 24);
-		
+
 		$urlRouterProvider.otherwise('/');
-		
+
 		$stateProvider
 			.state('home', {
 				url: '/',
@@ -26,6 +26,11 @@
 				url: '/tenants',
 				templateUrl: 'tenants.html',
 				controller: 'tenantsController'
+			})
+			.state('tenantSettings', {
+				url: '/tenantSettings/:id',
+				templateUrl: 'tenantSettings.html',
+				controller: 'tenantSettingsController'
 			})
 		;
 	}])
@@ -61,6 +66,8 @@
 				user = data;
 			},
 			isSignedOn: function() {
+				// #DEV_ONLY
+				if (user == null) user = { username: 'admin' };
 				return user != null;
 			},
 		};
@@ -72,10 +79,20 @@
 			{ id: 2, username: 'cententia', firstname: 'Panos', lastname: 'Psomas', company: 'Cententia SA', email: 'cententia@example.com', active: false },
 			{ id: 3, username: 'var1', company: 'VAR1 Ltd', email: 'john@var.com', active: true },
 		];
-		
-		var queryTenants = function() {
+
+		var pageTenants = function(page, pageSize) {
+			page = page || 1;
+			pageSize = pageSize || 10;
 			return $q(function(resolve, reject) {
-				resolve(tenants);
+				resolve({
+					Page: page,
+					NumPages: Math.floor(tenants.length / pageSize) + 1,
+					PageSize: pageSize,
+					Total: tenants.length,
+					Start: (page - 1) * pageSize,
+					End: tenants.length ? (page * pageSize < tenants.length ? page * pageSize - 1 : tenants.length - 1) : 0,
+					Items: tenants,
+				});
 			});
 		};
 		var getTenant = function(id) {
@@ -122,7 +139,7 @@
 			});
 		};
 		var theService = {
-			queryTenants: queryTenants,
+			pageTenants: pageTenants,
 			getTenant: getTenant,
 			registerTenant: registerTenant,
 			activateTenant: activateTenant,
@@ -160,7 +177,7 @@
 		console.info('Console started');
 	}])
 	.controller('homeController', [function() {}])
-	.controller('signinController', ['$scope', '$state', 'spa', 'signinService', function($scope, $state, spa, signinService) {
+	.controller('signinController', ['$scope', 'spa', 'signinService', function($scope, spa, signinService) {
 		$scope.signin = function(credentials) {
 			signinService.signin(credentials).then(function(tenant) {
 				spa.setUser(tenant);
@@ -173,6 +190,20 @@
 			console.warn('signinController.googleSignin: Not implemented!');
 		};
 	}])
-	.controller('tenantsController', [function() {}])
-	
+	.controller('tenantsController', ['$scope', 'tenantService', function($scope, tenantService) {
+		tenantService.pageTenants().then(function(data){
+			$scope.data = data;
+		}, function(err) {
+			console.log('tenantsController.ERROR', err);
+		});
+
+		$scope.selectFlags = [];
+		$scope.toggleSelection = function(index) {
+			console.log(index, $scope.selectFlags);
+		}
+	}])
+	.controller('tenantSettingsController', ['$scope', 'tenantService', function($scope, tenantService) {
+		
+	}])
+
 ;

@@ -1,0 +1,18 @@
+<h2>tenant settings</h2>
+
+<form name="tenantSettingsForm">
+    <md-subheader>Organization Model Service</md-subheader>
+    <md-input-container>
+        <label>Service uri</label>
+        <input required ng-model="omSrv.uri" />
+    </md-input-container>
+    <md-input-container>
+        <label>Security type</label>
+        <input required ng-model="omSrv.securityType" />
+    </md-input-container>
+    <md-input-container ng-show="omSrv.securityType == 'oauth2'">
+        <label>OAuth2 provider</label>
+        <input ng-model="omSrv.oauth2.providerName" />
+    </md-input-container>
+
+</form>
