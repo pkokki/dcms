@@ -1,15 +1,16 @@
 ﻿angular.module('studio', [
-		'ui.router', 
+		'ui.router',
 		'ngMaterial',
 		'ngMessages',
 		'atlas',
+		'titan',
 	])
 	.config(['$stateProvider', '$urlRouterProvider', '$mdIconProvider', function ($stateProvider, $urlRouterProvider, $mdIconProvider) {
-		
+
 		$mdIconProvider.iconSet('core', '../assets/img/core-icons.svg', 24);
-		
+
 		$urlRouterProvider.otherwise('/');
-		
+
 		$stateProvider
 			.state('home', {
 				url: '/',
@@ -88,40 +89,7 @@
 			},
 		};
 	}])
-	.factory('tenantService', ['$q', function($q) {
-		var maxTenantId = 3;
-		var tenants = [
-			{ id: 1, username: 'relational', firstname: 'Panos', lastname: 'Kokkinidis', company: 'Relational SA', email: 'relational@example.com', active: true, admin: true },
-			{ id: 2, username: 'cententia', firstname: 'Panos', lastname: 'Psomas', company: 'Cententia SA', email: 'cententia@example.com', active: false },
-			{ id: 3, username: 'var1', company: 'VAR1 Ltd', email: 'john@var.com', active: true },
-		];
-		
-		var getTenant = function(id) {
-			return $q(function(resolve, reject) {
-				var tenant = null;
-				for (var i=0; i<tenants.length; i++) {
-					if (tenants[i].id == id) {
-						tenant = tenants[i];
-						break;
-					}
-				}
-				resolve(tenant);
-			});
-		};
-		var registerTenant = function(tenantData) {
-			return $q(function(resolve, reject) {
-				tenantData.id = ++maxTenantId;
-				tenantData.active = false;
-				tenants.push(tenantData);
-				resolve(tenantData);
-			});
-		};
-		var theService = {
-			getTenant: getTenant,
-			registerTenant: registerTenant,
-		};
-		return theService;
-	}])
+
 	.factory('tenantSigninService', ['$q', 'tenantService', function($q, tenantService) {
 		var theService = {
 			signin: function(credentials) {
@@ -162,9 +130,9 @@
 	.controller('registerController', ['$scope', '$state', 'tenantService', function($scope, $state, tenantService) {
 		$scope.register = function(tenantData) {
 			tenantService.registerTenant(tenantData)
-				.then(function(data) { 
+				.then(function(data) {
 					$state.go('registerThanks');
-				}, function(data) { 
+				}, function(data) {
 					$scope.errorMsg = data;
 				});
 		};
