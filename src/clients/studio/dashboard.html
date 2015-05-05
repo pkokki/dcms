@@ -1,1 +1,23 @@
 ﻿<h2>dashboard</h2>
+
+<h3>Settings</h3>
+<md-button><div ui-sref="settings">manage settings</div></md-button>
+
+<h3>Users</h3>
+<md-button><div ui-sref="newUser">Create new</div></md-button>
+<div>Properties: Active, Role, Managing User, Operating Unit</div>
+<div>Roles: #DCMS_COLLECTION_AGENT_USER</div>
+<md-button><div ui-sref="searchUsers">Search users</div></md-button>
+<div>Criteria: Number, Name, Organization</div>
+
+<h3>Collection Agents</h3>
+<md-button><div ui-sref="newCollectionAgent">Create new</div></md-button>
+<div>Collection agents are members of group a group with role #DCMS_COLLECTION_AGENT_GROUP</div>
+<div>Properties: Number, Name, Code, Email, Description, Active</div>
+<div>Members</div>
+
+<h3>Dunning letters templates</h3>
+<div>Templates that begin with #DCMS_</div>
+
+<h3>Aging Buckets (BS)</h3>
+<div>{ Name, Description, Type, Status, Lines [Num, Type(Current|PastDue), DaysFrom, DaysTo, Headings['Current', ''] ] }</div>

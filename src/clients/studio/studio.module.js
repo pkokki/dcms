@@ -51,6 +51,16 @@
 				templateUrl: 'userProfile.html',
 				controller: 'userProfileController'
 			})
+			.state('newUser', {
+				url: '/newUser',
+				templateUrl: 'newUser.html',
+				controller: 'newUserController'
+			})
+			.state('settings', {
+				url: '/settings',
+				templateUrl: 'settings.html',
+				controller: 'settingsController'
+			})
 		;
 	}])
 	.run(['$rootScope', '$state', 'spa', function ($rootScope, $state, spa) {
@@ -85,6 +95,8 @@
 				tenant = data;
 			},
 			isSignedOn: function() {
+				// #DEV_ONLY
+				if (tenant == null) tenant = { id: 1, username: 'relational', firstname: 'Panos', lastname: 'Kokkinidis', company: 'Relational SA', email: 'relational@example.com', active: true, admin: true };
 				return tenant != null;
 			},
 		};
@@ -156,4 +168,16 @@
 	.controller('forgotPasswordController', [function() {}])
 	.controller('dashboardController', [function() {}])
 	.controller('userProfileController', [function() {}])
+	.controller('newUserController', ['$scope', function($scope) {
+		$scope.data = {
+			username: null,
+			password: null,
+			firstname: null,
+			lastname: null,
+			company: null,
+			email: null,
+		};
+	}])
+	.controller('settingsController', [function() {}])
+
 ;
