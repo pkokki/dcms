@@ -61,6 +61,21 @@
 				templateUrl: 'settings.html',
 				controller: 'settingsController'
 			})
+			.state('settings.operations', {
+				url: '/operations',
+				templateUrl: 'settings.operations.html',
+				//controller: 'settingsController'
+			})
+			.state('settings.transactions', {
+				url: '/transactions',
+				templateUrl: 'settings.transactions.html',
+				//controller: 'settingsController'
+			})
+			.state('settings.method', {
+				url: '/method',
+				templateUrl: 'settings.method.html',
+				//controller: 'settingsController'
+			})
 		;
 	}])
 	.run(['$rootScope', '$state', 'spa', function ($rootScope, $state, spa) {
