@@ -1,0 +1,34 @@
+<md-dialog aria-label="Bucket line">
+    <md-dialog-content class="sticky-container">
+        <md-subheader class="md-sticky-no-effect">Bucket line</md-subheader>
+        <div>
+            <form novalidate name="bucketLineForm" style="min-width:400px">
+                <md-input-container>
+                    <label>Heading</label>
+                    <input md-maxlength="50" required ng-model="data.heading"></input>
+                </md-input-container>
+
+                <md-switch ng-model="data.type" aria-label="type"
+                    ng-true-value="'Current'" ng-false-value="'PastDue'">
+                    The line is considered <strong>{{data.type == 'Current' ? 'current' : 'past due' }}</strong>.
+                </md-switch>
+
+                <md-input-container>
+                    <label>Days from</label>
+                    <input type="number" required ng-model="data.daysFrom"></input>
+                </md-input-container>
+
+                <md-input-container>
+                    <label>Days to</label>
+                    <input type="number" required ng-model="data.daysTo"></input>
+                </md-input-container>
+            </form>
+        </div>
+    </md-dialog-content>
+    <div class="md-actions" layout="row">
+        <span flex></span>
+        <md-button ng-click="cancel()" class="md-primary">cancel</md-button>
+        <md-button ng-disabled="bucketLineForm.$invalid"
+            ng-click="save(data)" class="md-primary">save</md-button>
+    </div>
+</md-dialog>

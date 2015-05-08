@@ -1,0 +1,49 @@
+<div layout="row" layout-align="center center">
+    <h2>{{formData.name || 'New bucket' }}</h2>
+    <span flex></span>
+    <md-button ng-click="cancel()">cancel</md-button>
+    <md-button ng-click="save();">save</md-button>
+</div>
+
+<md-content layout="column" layout-padding>
+    <form name="bucketForm">
+        <md-input-container>
+            <label>Name</label>
+            <input md-maxlength="30" required ng-model="formData.name"></input>
+        </md-input-container>
+        <md-input-container>
+            <label>Description</label>
+            <input md-maxlength="150" ng-model="formData.description"></input>
+        </md-input-container>
+        <md-switch ng-model="formData.enabled" aria-label="Enabled">
+            Enabled
+        </md-switch>
+
+        <md-toolbar class="md-toolbar-tools md-hue-3">
+            <p>Lines</p>
+            <span flex=""></span>
+            <md-button ng-click="addLine($event)" aria-label="add">
+                <md-icon md-svg-icon="core:add"></md-icon>
+            </md-button>
+        </md-toolbar>
+
+        <md-list>
+            <md-list-item class="md-2-line" ng-repeat="line in formData.lines">
+                <h3>{{ line.seq }}.&nbsp;&nbsp;</h3>
+                <div class="md-list-item-text" flex>
+                    <h3>{{ line.heading }}</h3>
+                    <p>{{ line.type }}</p>
+                </div>
+                <div class="md-list-item-text">
+                    <p>From {{ line.daysFrom }} to {{ line.daysTo }} days</p>
+                </div>
+                <md-button ng-click="editLine($event, $index)" aria-label="edit">
+                    <md-icon md-svg-icon="core:edit"></md-icon>
+                </md-button>
+                <md-button ng-click="deleteLine($index)" aria-label="delete">
+                    <md-icon md-svg-icon="core:remove"></md-icon>
+                </md-button>
+            </md-list-item>
+        </md-list>
+    </form>
+</md-content>
