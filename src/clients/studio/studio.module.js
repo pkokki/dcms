@@ -214,7 +214,8 @@
 				{ id: 3, name:'number of delinquencies', description: 'count of records', enabled: true, userDefined: false, type: 'expr', value: null },
 			],
 			scorers: [ 
-				{ id: 1, name:'default dunning scorer', description: 'a scorer ', enabled: true, userDefined: false, level: 'BillTo', minScore: 0, maxScore: 100, parts: [{ id: 1, name:'delinquencies amount', weight: 70 }, { id: 3, name:'number of delinquencies', weight: 30 }] }, 
+				{ id: 1, name:'default dunning scorer', description: 'a scorer ', enabled: true, userDefined: false, level: 'BillTo', minScore: 0, maxScore: 100, weightRequired: true, 
+				parts: [{ id: 1, name:'delinquencies amount', weight: 70 }, { id: 3, name:'number of delinquencies', weight: 30 }] }, 
 			],
 		};
 		var traverseForArray = function(target, name) {

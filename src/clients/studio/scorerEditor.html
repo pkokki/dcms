@@ -79,13 +79,14 @@
 			<div class="md-list-item-text" flex>
 				<h3>{{ part.name }}</h3>
 			</div>
-			<div flex="33">
+			<div flex="33" ng-show="formData.weightRequired">
 				<md-slider min="0" max="100" ng-model="part.weight" aria-label="weight"></md-slider>
 			</div>
-			<span>{{part.weight}}%</span>
+			<span ng-show="formData.weightRequired">{{part.weight}}%</span>
+
 			<md-button ng-click="deletePart($index)" aria-label="delete">
 				<md-icon md-svg-icon="core:delete"></md-icon>
-			</md-button>                
+			</md-button>
 		</md-list-item>
 	</md-list>
 </form>

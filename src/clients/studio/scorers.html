@@ -1,25 +1,24 @@
 ﻿<div layout="row" layout-align="center center">
     <h2>scorers</h2>
     <span flex></span>
+	
     <div ui-sref="scorerEditor({ id: 'new' })">
-        <md-button class="md-icon-button" aria-label="add" title="add">
-            <md-icon md-svg-icon="core:add"></md-icon>
-        </md-button>
-    </div>
+		<md-button class="md-icon-button" aria-label="add" title="add">
+			<md-icon md-svg-icon="core:add"></md-icon>
+		</md-button>
+	</div>
 </div>
 
-<md-content>
-    <md-list>
-        <md-list-item class="md-2-line" ng-repeat="item in entities">
-			<div class="md-list-item-text">
-                <h3>{{ item.name }}</h3>
-                <p>{{ item.description }}</p>{{item}}
-            </div>
-            <div ui-sref="scorerEditor({ id: item.id })">
-                <md-button aria-label="edit">
-                    <md-icon md-svg-icon="core:edit"></md-icon>
-                </md-button>
-            </div>
-        </md-list-item>
-    </md-list>
-</md-content>
+<md-list>
+	<md-list-item class="md-2-line" ng-repeat="item in entities">
+		<div class="md-list-item-text">
+			<h3>{{ item.name }}</h3>
+			<p>{{ item.description }}</p>
+		</div>
+		<div ui-sref="scorerEditor({ id: item.id })">
+			<md-button aria-label="edit">
+				<md-icon md-svg-icon="core:edit"></md-icon>
+			</md-button>
+		</div>
+	</md-list-item>
+</md-list>
