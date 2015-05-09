@@ -71,6 +71,16 @@
 				templateUrl: 'bucketEditor.html',
 				controller: 'bucketEditorController'
 			})
+			.state('scoringParts', {
+				url: '/scoringParts',
+				templateUrl: 'scoringParts.html',
+				controller: 'scoringPartsController'
+			})
+			.state('scoringPartEditor', {
+				url: '/scoringParts/:id',
+				templateUrl: 'scoringPartEditor.html',
+				controller: 'scoringPartEditorController'
+			})
 			.state('settings.operations', {
 				url: '/operations',
 				templateUrl: 'settings.operations.html',
@@ -188,8 +198,12 @@
 				enabled: false,
 			}],
 			dunningPlans: [{ id: 1, name: 'Plan #1', description: null, level: 'BillTo', enabled: true,  }],
-			scoreParts: [ { id: 1, name:'p1', description: null, enabled: true, foundation: true, type: 'Rule|Exp|Resource', value: null } ],
-			scorers: [ { id: 1, name:'p1', description: null, enabled: true, foundation: true, level: 'BillTo',
+			scoringParts: [ 
+				{ id: 1, name:'delinquencies amount', description: 'total delinquencies amount for account', enabled: true, userDefined: false, type: 'rule', value: null },
+				{ id: 2, name:'customer since', description: 'time span in years', enabled: false, userDefined: false, type: 'resx', value: null },
+				{ id: 3, name:'number of delinquencies', description: 'count of records', enabled: true, userDefined: false, type: 'expr', value: null },
+			],
+			scorers: [ { id: 1, name:'p1', description: null, enabled: true, userDefined: false, level: 'BillTo',
 				minScore: 0, maxScore: 100 } ],
 		};
 		var traverseForArray = function(target, name) {
@@ -512,5 +526,44 @@
 			for (var i = index; i < lines.length; i++)
 				--lines[i].seq;
 		};
+	}])
+	.controller('scoringPartsController', ['$scope', 'dcmsData', function($scope, dcmsData) {
+		dcmsData.getEntities('scoringParts').then(function(entities) {
+			$scope.entities = entities;
+		});
+	}])
+	.controller('scoringPartEditorController', ['$scope', '$state', '$stateParams', 'dcmsData', function($scope, $state, $stateParams, dcmsData) {
+		var id = $stateParams.id;
+		if (id == 'new') {
+			$scope.formData = { id: null, userDefined: true, type: 'rule' };
+		}
+		else {
+			dcmsData.getEntity('scoringParts', id).then(function(entity) {
+				$scope.formData = entity;
+			});
+		}
+		
+		var finish = function() {
+			$scope.formData = null;
+			$state.go('scoringParts');
+		};
+		$scope.cancel = function() {
+			finish();
+		}
+		$scope.save = function() {
+			var data = $scope.formData;
+			if (data) {
+				var next = function(entity) {
+					finish();
+				};
+				if (data.id) {
+					dcmsData.updateEntity('scoringParts', data).then(next);
+				}
+				else {
+					dcmsData.createEntity('scoringParts', data).then(next);
+				}
+			}
+		};
+
 	}])
 ;

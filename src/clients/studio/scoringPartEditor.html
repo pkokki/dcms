@@ -1,0 +1,38 @@
+﻿<div layout="row" layout-align="center center">
+    <h2>{{formData.name || 'New scoring part' }}</h2>
+    <span flex></span>
+    <md-button ng-click="cancel()">cancel</md-button>
+    <md-button ng-click="save();">save</md-button>
+</div>
+
+<md-content layout="column" layout-padding>
+    <form name="bucketForm">
+        <md-input-container>
+            <label>Name</label>
+            <input md-maxlength="30" required ng-model="formData.name"></input>
+        </md-input-container>
+        <md-input-container>
+            <label>Description</label>
+            <input md-maxlength="150" ng-model="formData.description"></input>
+        </md-input-container>
+        <md-switch ng-model="formData.enabled" aria-label="Enabled">
+            Enabled
+        </md-switch>
+		
+		<div layout layout-align="start center">
+			<md-select placeholder="type" ng-model="formData.type">
+				<md-option value="rule">rule</md-option>
+				<md-option value="expr">expression</md-option>
+				<md-option value="resx">resource</md-option>
+			</md-select>
+			<md-button ng-show="formData.type=='rule'">edit rule</md-button>
+			<md-button ng-show="formData.type=='expr'">edit expression</md-button>
+			<md-button ng-show="formData.type=='resx'">edit resource</md-button>
+		</div>
+		
+		<md-input-container>
+			<label>Value</label>
+			<textarea ng-model="formData.value" columns="1"></textarea>
+		</md-input-container>
+	</form>
+</md-content>
