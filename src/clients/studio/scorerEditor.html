@@ -1,0 +1,91 @@
+﻿<div layout="row" layout-align="center center">
+    <h2>{{formData.name || 'New scorer' }}</h2>
+    <span flex></span>
+    <md-button ng-click="cancel()">cancel</md-button>
+    <md-button ng-click="save();">save</md-button>
+</div>
+
+
+<form name="bucketForm">
+	<md-input-container>
+		<label>Name</label>
+		<input md-maxlength="30" required ng-model="formData.name"></input>
+	</md-input-container>
+	<md-input-container>
+		<label>Description</label>
+		<input md-maxlength="150" ng-model="formData.description"></input>
+	</md-input-container>
+		
+	<div layout>
+		<md-input-container>
+			<label>Valid from</label>
+			<input type="date" ng-model="formData.validFrom" format-date></input>
+		</md-input-container>
+		<md-input-container>
+			<label>Valid to</label>
+			<input type="date" ng-model="formData.validTo" format-date></input>
+		</md-input-container>
+	</div>
+	
+	<div layout>
+		<md-input-container>
+			<label>Minimum score</label>
+			<input type="number" ng-model="formData.minScore"></input>
+		</md-input-container>
+		<md-input-container>
+			<label>Maximum score</label>
+			<input type="number" ng-model="formData.maxScore"></input>
+		</md-input-container>
+	</div>
+	
+	<div layout>
+		<md-select placeholder="level" ng-model="formData.level">
+			<md-option value="Customer">Customer</md-option>
+			<md-option value="Account">Account</md-option>
+			<md-option value="BillTo">BillTo</md-option>
+		</md-select>
+		<md-select placeholder="out of range handling" ng-model="formData.outOfRange">
+			<md-option value="Customer">Closest</md-option>
+		</md-select>
+	</div>
+	
+	<div layout>
+		<md-switch ng-model="formData.enabled" aria-label="Enabled">
+			Enabled
+		</md-switch>
+		<md-switch ng-model="formData.weightRequired" aria-label="Weight required">
+			Weight required
+		</md-switch>
+		<md-switch ng-model="formData.statusCalculator" aria-label="Used to determine status">
+			Used to determine status
+		</md-switch>
+	</div>
+	
+	<md-input-container>
+		<label>Job</label>
+		<input></input>
+	</md-input-container>
+	
+	<md-toolbar class="md-toolbar-tools md-hue-3">
+		<p>Scoring parts</p>
+		<span flex=""></span>
+		<md-button ng-click="addPart($event)" aria-label="add">
+			<md-icon md-svg-icon="core:add"></md-icon>
+		</md-button>
+	</md-toolbar>
+	
+	<md-list>
+		<md-list-item ng-repeat="part in formData.parts" ng-click="viewPart($event, $index)">
+			<div class="md-list-item-text" flex>
+				<h3>{{ part.name }}</h3>
+			</div>
+			<div flex="33">
+				<md-slider min="0" max="100" ng-model="part.weight" aria-label="weight"></md-slider>
+			</div>
+			<span>{{part.weight}}%</span>
+			<md-button ng-click="deletePart($index)" aria-label="delete">
+				<md-icon md-svg-icon="core:delete"></md-icon>
+			</md-button>                
+		</md-list-item>
+	</md-list>
+</form>

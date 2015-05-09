@@ -1,0 +1,16 @@
+﻿<md-dialog aria-label="Scoring parts">
+    <md-dialog-content class="sticky-container">
+        <md-list>
+			<md-list-item class="md-2-line" ng-repeat="item in items" ng-click="select(item)">
+				<div class="md-list-item-text" flex>
+                    <h3>{{ item.name }}</h3>
+                    <p>{{ item.type }}</p>
+                </div>
+			</md-list-item>
+		</md-list>
+    </md-dialog-content>
+    <div class="md-actions" layout="row">
+        <span flex></span>
+        <md-button ng-click="cancel()" class="md-primary">cancel</md-button>
+    </div>
+</md-dialog>

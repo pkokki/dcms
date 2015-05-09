@@ -81,6 +81,16 @@
 				templateUrl: 'scoringPartEditor.html',
 				controller: 'scoringPartEditorController'
 			})
+			.state('scorers', {
+				url: '/scorers',
+				templateUrl: 'scorers.html',
+				controller: 'scorersController'
+			})
+			.state('scorerEditor', {
+				url: '/scorers/:id',
+				templateUrl: 'scorerEditor.html',
+				controller: 'scorerEditorController'
+			})
 			.state('settings.operations', {
 				url: '/operations',
 				templateUrl: 'settings.operations.html',
@@ -203,8 +213,9 @@
 				{ id: 2, name:'customer since', description: 'time span in years', enabled: false, userDefined: false, type: 'resx', value: null },
 				{ id: 3, name:'number of delinquencies', description: 'count of records', enabled: true, userDefined: false, type: 'expr', value: null },
 			],
-			scorers: [ { id: 1, name:'p1', description: null, enabled: true, userDefined: false, level: 'BillTo',
-				minScore: 0, maxScore: 100 } ],
+			scorers: [ 
+				{ id: 1, name:'default dunning scorer', description: 'a scorer ', enabled: true, userDefined: false, level: 'BillTo', minScore: 0, maxScore: 100, parts: [{ id: 1, name:'delinquencies amount', weight: 70 }, { id: 3, name:'number of delinquencies', weight: 30 }] }, 
+			],
 		};
 		var traverseForArray = function(target, name) {
 			var obj = target[name];
@@ -367,8 +378,22 @@
 		};
 		return settings;
 	}])
-
-
+	/************************************************************************
+	 **************************** DIRECTIVES ********************************
+	 ************************************************************************/
+	.directive('formatDate', [function(){
+		return {
+			require: 'ngModel',
+			link: function(scope, elem, attr, modelCtrl) {
+				modelCtrl.$formatters.push(function(modelValue){
+					if (modelValue)
+						return new Date(modelValue);
+					else
+						return null;
+				})
+			}
+		}
+	}])
 	/************************************************************************
 	 **************************** CONTROLLERS *******************************
 	 ************************************************************************/
@@ -564,6 +589,85 @@
 				}
 			}
 		};
-
 	}])
-;
+	.controller('scorersController', ['$scope', 'dcmsData', function($scope, dcmsData) {
+		dcmsData.getEntities('scorers').then(function(entities) {
+			$scope.entities = entities;
+		});
+	}])
+	.controller('scorerEditorController', ['$scope', '$state', '$stateParams', '$mdDialog', 'dcmsData', function($scope, $state, $stateParams, $mdDialog, dcmsData) {
+		var id = $stateParams.id;
+		if (id == 'new') {
+			$scope.formData = { id: null, userDefined: true, type: 'rule' };
+		}
+		else {
+			dcmsData.getEntity('scorers', id).then(function(entity) {
+				$scope.formData = entity;
+			});
+		}
+		
+		var finish = function() {
+			$scope.formData = null;
+			$state.go('scorers');
+		};
+		$scope.cancel = function() {
+			finish();
+		}
+		$scope.save = function() {
+			var data = $scope.formData;
+			if (data) {
+				var next = function(entity) {
+					finish();
+				};
+				if (data.id) {
+					dcmsData.updateEntity('scorers', data).then(next);
+				}
+				else {
+					dcmsData.createEntity('scorers', data).then(next);
+				}
+			}
+		};
+		
+		$scope.addPart = function(ev) {
+			var data = { type: 'PastDue' };
+			$mdDialog.show({
+				controller: ['$scope', '$mdDialog', function($scope, $mdDialog) {
+					dcmsData.getEntities('scoringParts').then(function(items) {
+						$scope.items = items;
+					});
+					$scope.cancel = function() {
+						$mdDialog.cancel();
+					}
+					$scope.select = function(data) {
+						$mdDialog.hide(data);
+					}
+				}],
+				templateUrl: 'scoringPartSelector.html',
+				targetEvent: ev,
+			}).then(function(part) {
+				if (!$scope.formData.parts)
+					$scope.formData.parts = [];
+				$scope.formData.parts.push({ id: part.id, name: part.name, weight: 0 });
+			});
+		};
+		$scope.deletePart = function(index) {
+			var parts = $scope.formData.parts;
+			parts.splice(index, 1);
+			for (var i = index; i < parts.length; i++)
+				--parts[i].seq;
+		};
+		$scope.viewPart = function(ev, index) {
+			var part = $scope.formData.parts[index];
+			$mdDialog.show(
+				$mdDialog.alert()
+					.title('Scoring part details')
+					.content(part)
+					.ariaLabel('Scoring part details')
+					.ok('OK')
+					.targetEvent(ev)
+			);
+		};
+		
+	}])
+	
+	;
