@@ -1,0 +1,26 @@
+<md-dialog aria-label="Scorer components">
+    <md-dialog-content class="sticky-container">
+        <md-subheader class="md-sticky-no-effect">Scorer components</md-subheader>
+        <div>
+            <form novalidate name="letterPlanPartsForm" style="min-width:400px">
+                <md-list>
+            		<md-list-item ng-repeat="part in data" ng-click="viewPart($event, $index)">
+            			<div class="md-list-item-text" flex>
+            				<h3>{{ part.name }}</h3>
+            			</div>
+            			<div flex="33">
+            				<md-slider min="0" max="100" ng-model="part.weight" aria-label="weight"></md-slider>
+            			</div>
+            			<span>{{part.weight}}%</span>
+            		</md-list-item>
+            	</md-list>
+            </form>
+        </div>
+    </md-dialog-content>
+    <div class="md-actions" layout="row">
+        <span flex></span>
+        <md-button ng-click="cancel()" class="md-primary">cancel</md-button>
+        <md-button ng-disabled="letterPlanPartsForm.$invalid"
+            ng-click="save(data)" class="md-primary">save</md-button>
+    </div>
+</md-dialog>

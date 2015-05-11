@@ -61,6 +61,21 @@
 				templateUrl: 'settings.html',
 				controller: 'settingsController'
 			})
+			.state('settings.operations', {
+				url: '/operations',
+				templateUrl: 'settings.operations.html',
+				//controller: 'settingsController'
+			})
+			.state('settings.transactions', {
+				url: '/transactions',
+				templateUrl: 'settings.transactions.html',
+				//controller: 'settingsController'
+			})
+			.state('settings.method', {
+				url: '/method',
+				templateUrl: 'settings.method.html',
+				//controller: 'settingsController'
+			})
 			.state('buckets', {
 				url: '/buckets',
 				templateUrl: 'buckets.html',
@@ -91,20 +106,15 @@
 				templateUrl: 'scorerEditor.html',
 				controller: 'scorerEditorController'
 			})
-			.state('settings.operations', {
-				url: '/operations',
-				templateUrl: 'settings.operations.html',
-				//controller: 'settingsController'
+			.state('letterPlans', {
+				url: '/letterPlans',
+				templateUrl: 'letterPlans.html',
+				controller: 'letterPlansController'
 			})
-			.state('settings.transactions', {
-				url: '/transactions',
-				templateUrl: 'settings.transactions.html',
-				//controller: 'settingsController'
-			})
-			.state('settings.method', {
-				url: '/method',
-				templateUrl: 'settings.method.html',
-				//controller: 'settingsController'
+			.state('letterPlanEditor', {
+				url: '/letterPlans/:id',
+				templateUrl: 'letterPlanEditor.html',
+				controller: 'letterPlanEditorController'
 			})
 		;
 	}])
@@ -207,15 +217,24 @@
 				description: 'The description of the bucket.',
 				enabled: false,
 			}],
-			dunningPlans: [{ id: 1, name: 'Plan #1', description: null, level: 'BillTo', enabled: true,  }],
-			scoringParts: [ 
+			scoringParts: [
 				{ id: 1, name:'delinquencies amount', description: 'total delinquencies amount for account', enabled: true, userDefined: false, type: 'rule', value: null },
 				{ id: 2, name:'customer since', description: 'time span in years', enabled: false, userDefined: false, type: 'resx', value: null },
 				{ id: 3, name:'number of delinquencies', description: 'count of records', enabled: true, userDefined: false, type: 'expr', value: null },
 			],
-			scorers: [ 
-				{ id: 1, name:'default dunning scorer', description: 'a scorer ', enabled: true, userDefined: false, level: 'BillTo', minScore: 0, maxScore: 100, weightRequired: true, 
-				parts: [{ id: 1, name:'delinquencies amount', weight: 70 }, { id: 3, name:'number of delinquencies', weight: 30 }] }, 
+			scorers: [
+				{ id: 1, name:'default dunning scorer', description: 'a scorer ', enabled: true, userDefined: false, level: 'BillTo', minScore: 0, maxScore: 100, weightRequired: true,
+				parts: [{ id: 1, name:'delinquencies amount', weight: 70 }, { id: 3, name:'number of delinquencies', weight: 30 }] },
+			],
+			letterPlans: [
+				{ id: 1, name: 'plan #1', description: 'plan #1 description', level: 'Account', enabled: true, scorerId: 1, bucketId: 1 },
+				{ id: 2, name: 'plan #2', description: null, level: 'BillTo', enabled: true, scorerId: 1, bucketId: 1,
+					scorerParts: [{id: 1, name: "delinquencies amount", weight: 100}, {id: 3, name: "number of delinquencies", weight: 0}],
+					planLines: [
+						{bucketLine: {id:1, heading: "1-53 days past"}, scoreLow: 0, scoreHigh: 60, method: "Email", template:{id: 2, name: "tx2"}},
+						{bucketLine: {id:1, heading: "1-53 days past"}, scoreLow: 61, scoreHigh: 100, method: "Email", template:{id: 2, name: "tx2"}, callback: { enabled:true, days:5}},
+					]
+				},
 			],
 		};
 		var traverseForArray = function(target, name) {
@@ -303,7 +322,8 @@
 								resolve(JSON.parse(JSON.stringify(found)));
 							}
 							else {
-								reject('Entity with id "' + id + '" and type "' + type + '" not exists.');
+								reject('Entity with id "' + id + '" and type "'
+									+ type + '" not exists.');
 							}
 						}
 						else {
@@ -568,7 +588,7 @@
 				$scope.formData = entity;
 			});
 		}
-		
+
 		var finish = function() {
 			$scope.formData = null;
 			$state.go('scoringParts');
@@ -606,7 +626,7 @@
 				$scope.formData = entity;
 			});
 		}
-		
+
 		var finish = function() {
 			$scope.formData = null;
 			$state.go('scorers');
@@ -628,7 +648,7 @@
 				}
 			}
 		};
-		
+
 		$scope.addPart = function(ev) {
 			var data = { type: 'PastDue' };
 			$mdDialog.show({
@@ -668,7 +688,170 @@
 					.targetEvent(ev)
 			);
 		};
-		
+
 	}])
-	
+	.controller('letterPlansController', ['$scope', 'dcmsData', function($scope, dcmsData) {
+		dcmsData.getEntities('letterPlans').then(function(entities) {
+			$scope.entities = entities;
+		});
+	}])
+	.controller('letterPlanEditorController', ['$scope', '$state', '$stateParams', '$mdDialog', 'dcmsData', function($scope, $state, $stateParams, $mdDialog, dcmsData) {
+		var id = $stateParams.id;
+		dcmsData.getEntities('agingBuckets').then(function(buckets) {
+		dcmsData.getEntities('scorers').then(function(scorers) {
+			$scope.buckets = buckets;
+			$scope.scorers = scorers;
+			if (id == 'new') {
+				$scope.formData = { id: null };
+			}
+			else {
+				dcmsData.getEntity('letterPlans', id).then(function(letterPlan) {
+					$scope.formData = letterPlan;
+				});
+			}
+		});
+		});
+
+		var finish = function() {
+			$scope.formData = null;
+			$state.go('letterPlans');
+		};
+		$scope.cancel = function() {
+			finish();
+		};
+		$scope.save = function() {
+			var data = $scope.formData;
+			if (data) {
+				var next = function(entity) {
+					finish();
+				};
+				if (data.id) {
+					dcmsData.updateEntity('letterPlans', data).then(next);
+				}
+				else {
+					dcmsData.createEntity('letterPlans', data).then(next);
+				}
+			}
+		};
+
+		$scope.$watch('formData.bucketId', function(newBucketId, oldBucketId) {
+			var bucket = null;
+			if (newBucketId) {
+				for (var i = 0; i < $scope.buckets.length; i++) {
+					if ($scope.buckets[i].id == newBucketId) {
+						bucket = $scope.buckets[i];
+					}
+				}
+			}
+			$scope.selectedBucket = bucket;
+
+			if ($scope.formData && newBucketId != oldBucketId) {
+				$scope.formData.planLines = [];
+			}
+		});
+
+		$scope.$watch('formData.scorerId', function(newScorerId, oldScorerId) {
+			var scorer = null;
+			if (newScorerId) {
+				for (var i = 0; i < $scope.scorers.length; i++) {
+					if ($scope.scorers[i].id == newScorerId) {
+						scorer = $scope.scorers[i];
+					}
+				}
+			}
+			$scope.selectedScorer = scorer;
+
+			if ($scope.formData && !$scope.formData.scorerParts) {
+				$scope.formData.scorerParts = scorer ? scorer.parts : null;
+			};
+		});
+
+		$scope.configureParts = function(ev) {
+			var original = $scope.formData.scorerParts;
+			var copy = original ? JSON.parse(JSON.stringify(original)) : {};
+			$mdDialog.show({
+				controller: ['$scope', '$mdDialog', function($scope, $mdDialog) {
+					$scope.data = copy;
+					$scope.cancel = function() {
+						$mdDialog.cancel();
+					}
+					$scope.save = function(data) {
+						$mdDialog.hide(data);
+					}
+				}],
+				templateUrl: 'letterPlanPartsDialog.html',
+				targetEvent: ev,
+			}).then(function(scorerParts) {
+				$scope.formData.scorerParts = scorerParts;
+			});
+		};
+
+		var planLineDialog = function(ev, line, selectedScorer, selectedBucket) {
+			return $mdDialog.show({
+				controller: ['$scope', '$mdDialog', function($scope, $mdDialog) {
+					$scope.line = line;
+					$scope.selectedScorer = selectedScorer;
+					$scope.selectedBucket = selectedBucket;
+					$scope.selectBucketLine = function(ev) {
+						$scope.items = selectedBucket.lines;
+						$scope.selecting = 'bucketLine';
+					};
+					$scope.selectMethod = function(ev) {
+						$scope.selecting = 'method';
+					};
+					$scope.selectTemplate = function(ev) {
+						$scope.items = [{id:1, name:'tx1'}, {id:2, name:'tx2'}, {id:3, name:'tx3'}, {name:'tx4'}, {name:'tx5'}, {name:'tx6'}];
+						$scope.selecting = 'template';
+					};
+					$scope.doSelection = function(item) {
+						if ($scope.selecting == 'method')
+							line.method = item;
+						else if ($scope.selecting == 'template')
+							line.template = { id: item.id, name: item.name };
+						else if ($scope.selecting == 'bucketLine')
+							line.bucketLine = { id: item.id, heading: item.heading };
+
+						$scope.selecting = null;
+					};
+					$scope.cancel = function() {
+						if ($scope.selecting)
+							$scope.selecting = null;
+						else
+							$mdDialog.cancel();
+					};
+					$scope.save = function() {
+						$mdDialog.hide($scope.line);
+					};
+				}],
+				templateUrl: 'letterPlanLineDialog.html',
+				targetEvent: ev,
+			})
+		};
+
+		$scope.addPlanLine = function(ev) {
+			var line = {
+				bucketLine: { id: null },
+				scoreLow: $scope.selectedScorer.minScore,
+				scoreHigh: $scope.selectedScorer.maxScore,
+				method: 'Email',
+				template: { id: null },
+				callback: { enabled: false, days: null }
+			};
+			planLineDialog(ev, line, $scope.selectedScorer, $scope.selectedBucket).then(function(line) {
+				if (!$scope.formData.planLines)
+					$scope.formData.planLines=[];
+				$scope.formData.planLines.push(line);
+			});
+		};
+		$scope.editPlanLine = function(ev, index) {
+			var line = $scope.formData.planLines[index];
+			planLineDialog(ev, line, $scope.selectedScorer, $scope.selectedBucket).then(function(line) {
+				$scope.formData.planLines[index] = line;
+			});
+		};
+		$scope.deletePlanLine = function(ev, index) {
+			var lines = $scope.formData.planLines;
+			lines.splice(index, 1);
+		};
+	}])
 	;

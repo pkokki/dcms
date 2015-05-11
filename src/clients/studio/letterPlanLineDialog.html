@@ -1,0 +1,86 @@
+<md-dialog aria-label="Plan line">
+    <md-dialog-content class="sticky-container">
+        <md-subheader class="md-sticky-no-effect">Plan line</md-subheader>
+        <div ng-show="!selecting">
+            <form novalidate name="letterPlanLineForm" style="min-width:400px">
+                <md-list>
+                    <md-list-item class="md-2-line" ng-click="selectBucketLine($event)">
+                        <div class="md-list-item-text">
+                            <h3>Bucket line</h3>
+                            <p>{{line.bucketLine.heading || 'selected bucket line name'}}</p>
+                        </div>
+                    </md-list-item>
+                    <md-list-item>
+                        <div layout>
+                            <md-input-container>
+                                <label>Score low</label>
+                                <input style="width:100px" type="number"
+                                    ng-model="line.scoreLow" min="{{selectedScorer.minScore}}" max="{{selectedScorer.maxScore}}"></input>
+                            </md-input-container>
+                            <md-input-container>
+                                <label>Score high</label>
+                                <input style="width:100px" type="number"
+                                    ng-model="line.scoreHigh" min="{{selectedScorer.minScore}}" max="{{selectedScorer.maxScore}}"></input>
+                            </md-input-container>
+                        </div>
+                    </md-list-item>
+                    <md-list-item class="md-2-line" ng-click="selectMethod($event)">
+                        <div class="md-list-item-text">
+                            <h3>Method</h3>
+                            <p>{{line.method || 'selected method'}}</p>
+                        </div>
+                    </md-list-item>
+                    <md-list-item class="md-2-line" ng-click="selectTemplate($event)">
+                        <div class="md-list-item-text">
+                            <h3>Template</h3>
+                            <p>{{line.template.name || 'selected template'}}</p>
+                        </div>
+                    </md-list-item>
+                    <md-list-item class="md-2-line">
+                        <div class="md-list-item-text">
+                            <h3>Callback</h3>
+                            <p><md-switch ng-model="line.callback.enabled"></md-switch></p>
+                        </div>
+                    </md-list-item>
+                    <md-list-item>
+                        <md-input-container>
+                            <label>Callback days</label>
+                            <input style="width:150px" type="number" min="1" max="99"
+                                ng-disabled="!line.callback.enabled" ng-model="line.callback.days"></input>
+                        </md-input-container>
+                    </md-list-item>
+                </md-list>
+            </form>
+        </div>
+        <div ng-show="selecting == 'bucketLine'">
+            <md-subheader class="md-sticky-no-effect">Select a bucket line:</md-subheader>
+            <md-list>
+                <md-list-item ng-repeat="item in items" ng-click="doSelection(item)">
+                    <p>{{item.heading}}</p>
+                </md-list-item>
+            </md-list>
+        </div>
+        <div ng-show="selecting == 'method'">
+            <md-subheader class="md-sticky-no-effect">Select a method:</md-subheader>
+            <md-list>
+                <md-list-item ng-click="doSelection('Email')"><p>Email</p></md-list-item>
+                <md-list-item ng-click="doSelection('Fax')"><p>Fax</p></md-list-item>
+                <md-list-item ng-click="doSelection('Letter')"><p>Letter</p></md-list-item>
+            </md-list>
+        </div>
+        <div ng-show="selecting == 'template'">
+            <md-subheader class="md-sticky-no-effect">Select a method:</md-subheader>
+            <md-list>
+                <md-list-item ng-repeat="item in items" ng-click="doSelection(item)">
+                    <p>{{item.name}}</p>
+                </md-list-item>
+            </md-list>
+        </div>
+    </md-dialog-content>
+    <div class="md-actions" layout="row">
+        <span flex></span>
+        <md-button ng-click="cancel()" class="md-primary">{{selecting ? 'back' : 'cancel'}}</md-button>
+        <md-button ng-disabled="letterPlanLineForm.$invalid || selecting"
+            ng-click="save()" class="md-primary">save</md-button>
+    </div>
+</md-dialog>

@@ -1,0 +1,26 @@
+<div layout="row" layout-align="center center">
+    <h2>letter plans</h2>
+    <span flex></span>
+
+    <div ui-sref="letterPlanEditor({ id: 'new' })">
+		<md-button class="md-icon-button" aria-label="add" title="add">
+			<md-icon md-svg-icon="core:add"></md-icon>
+		</md-button>
+	</div>
+</div>
+
+<p>Letter plans automatically send notices to delinquent customersand can assign a follow up call to a collector.</p>
+
+<md-list>
+	<md-list-item class="md-2-line" ng-repeat="item in entities">
+		<div class="md-list-item-text">
+			<h3>{{ item.name }}</h3>
+			<p>{{ item.description }}</p>
+		</div>
+		<div ui-sref="letterPlanEditor({ id: item.id })">
+			<md-button aria-label="edit">
+				<md-icon md-svg-icon="core:edit"></md-icon>
+			</md-button>
+		</div>
+	</md-list-item>
+</md-list>

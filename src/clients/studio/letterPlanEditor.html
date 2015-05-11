@@ -1,0 +1,85 @@
+<div layout="row" layout-align="center center">
+    <h2>{{formData.name || 'New plan' }}</h2>
+    <span flex></span>
+    <md-button ng-click="cancel()">cancel</md-button>
+    <md-button ng-click="save();">save</md-button>
+</div>
+
+<form name="letterPlanForm">
+	<md-input-container>
+		<label>Name</label>
+		<input md-maxlength="30" required ng-model="formData.name"></input>
+	</md-input-container>
+	<md-input-container>
+		<label>Description</label>
+		<input md-maxlength="150" ng-model="formData.description"></input>
+	</md-input-container>
+
+    <div layout>
+		<md-switch ng-model="formData.enabled" aria-label="Enabled">
+			Enabled
+		</md-switch>
+        <md-input-container>
+			<label>Start date</label>
+			<input type="date" ng-model="formData.startDate" format-date></input>
+		</md-input-container>
+		<md-input-container>
+			<label>End date</label>
+			<input type="date" ng-model="formData.endDate" format-date></input>
+		</md-input-container>
+        <md-select placeholder="select level" ng-model="formData.type">
+            <md-option value="Customer">Customer</md-option>
+            <md-option value="Account">Account</md-option>
+            <md-option value="BillTo">BillTo</md-option>
+            <md-option value="Delinquency">Delinquency</md-option>
+        </md-select>
+	</div>
+
+    <div layout layout-align="start center">
+        <div ng-class="{'md-input-has-value': formData.scorerId}">
+            <label>Scorer* </label>
+            <md-select required ng-model="formData.scorerId" placeholder="select">
+                <md-option ng-value="scorer.id" ng-repeat="scorer in scorers">{{ scorer.name }}</md-option>
+            </md-select>
+        </div>
+        <md-button ng-disabled="!formData.scorerId" ng-click="configureParts();">configure part weights</md-button>
+    </div>
+
+    <div layout layout-align="start center">
+        <div ng-class="{'md-input-has-value': formData.bucketId}">
+            <label>Aging bucket* </label>
+            <md-select required ng-model="formData.bucketId" placeholder="select">
+                <md-option ng-value="bucket.id" ng-repeat="bucket in buckets">{{ bucket.name }}</md-option>
+            </md-select>
+        </div>
+    </div>
+
+    <md-toolbar class="md-toolbar-tools md-hue-3">
+		<p>Template lines</p>
+		<span flex=""></span>
+		<md-button ng-click="addPlanLine($event)" ng-disabled="!formData.scorerId || !formData.bucketId" aria-label="add">
+			<md-icon md-svg-icon="core:add"></md-icon>
+		</md-button>
+	</md-toolbar>
+
+    <md-list>
+		<md-list-item class="md-3-line" ng-repeat="planLine in formData.planLines">
+            <div class="md-list-item-text" flex>
+				<h3>{{ planLine.bucketLine.heading }}</h3>
+				<p>Score {{ planLine.scoreLow }} - {{ planLine.scoreHigh }}</p>
+			</div>
+            <div class="md-list-item-text" flex>
+				<h3>Method <strong>{{ planLine.method }}</strong></h3>
+				<p>{{ planLine.template.name }}</p>
+                <p ng-show="planLine.callback.enabled">Callback in {{ planLine.callback.days }} days</p>
+			</div>
+            <md-button ng-click="editPlanLine($event, $index)" aria-label="edit">
+				<md-icon md-svg-icon="core:edit"></md-icon>
+			</md-button>
+            <md-button ng-click="deletePlanLine($event, $index)" aria-label="delete">
+                <md-icon md-svg-icon="core:remove"></md-icon>
+		    </md-button>
+        </md-list-item>
+	</md-list>
+
+</form>
