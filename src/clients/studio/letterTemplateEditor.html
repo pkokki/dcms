@@ -1,0 +1,60 @@
+<div layout="row" layout-align="center center">
+    <h2>{{formData.name || 'New template' }}</h2>
+    <span flex></span>
+    <md-button ng-click="cancel()">cancel</md-button>
+    <md-button ng-click="save();">save</md-button>
+</div>
+
+<form name="letterPlanForm">
+	<md-input-container>
+		<label>Name</label>
+		<input md-maxlength="30" required ng-model="formData.name"></input>
+	</md-input-container>
+	<md-input-container>
+		<label>Description</label>
+		<input md-maxlength="150" ng-model="formData.description"></input>
+	</md-input-container>
+
+    <div layout>
+		<md-switch ng-model="formData.enabled" aria-label="Enabled">
+			Enabled
+		</md-switch>
+        <md-input-container>
+			<label>Start date</label>
+			<input type="date" ng-model="formData.startDate" format-date></input>
+		</md-input-container>
+		<md-input-container>
+			<label>End date</label>
+			<input type="date" ng-model="formData.endDate" format-date></input>
+		</md-input-container>
+	</div>
+
+    <md-toolbar class="md-toolbar-tools md-hue-3">
+		<p>Template files</p>
+		<span flex=""></span>
+		<md-button ng-click="addFile($event)" aria-label="add">
+			<md-icon md-svg-icon="core:add"></md-icon>
+		</md-button>
+	</md-toolbar>
+
+    <md-list>
+		<md-list-item ng-repeat="item in formData.files" ng-click="previewFile($event, $index)">
+			<div class="md-list-item-text" flex>
+				<h3>{{ item.filename }}</h3>
+            </div>
+            <div class="md-list-item-text">
+                <p>{{ item.language }}</p>
+			</div>
+            <md-button ng-click="downloadFile($event, $index)" aria-label="download" title="download">
+				<md-icon md-svg-icon="core:file_download"></md-icon>
+			</md-button>
+            <md-button ng-click="editFile($event, $index)" aria-label="edit" title="edit">
+				<md-icon md-svg-icon="core:edit"></md-icon>
+			</md-button>
+			<md-button ng-click="deleteFile($event, $index)" aria-label="delete" title="delete">
+				<md-icon md-svg-icon="core:delete"></md-icon>
+			</md-button>
+		</md-list-item>
+	</md-list>
+
+</form>

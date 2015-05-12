@@ -116,6 +116,16 @@
 				templateUrl: 'letterPlanEditor.html',
 				controller: 'letterPlanEditorController'
 			})
+			.state('letterTemplates', {
+				url: '/letterTemplates',
+				templateUrl: 'letterTemplates.html',
+				controller: 'letterTemplatesController'
+			})
+			.state('letterTemplateEditor', {
+				url: '/letterTemplates/:id',
+				templateUrl: 'letterTemplateEditor.html',
+				controller: 'letterTemplateEditorController'
+			})
 		;
 	}])
 	.run(['$rootScope', '$state', 'spa', function ($rootScope, $state, spa) {
@@ -236,6 +246,16 @@
 					]
 				},
 			],
+			letterTemplates: [
+				{
+					id: 1, code:'TMPL001', name: 'template #1', description: 'a description for template #1',
+					enabled: true, startDate: '2015-04-30T21:00:00.000Z', endDate: '2015-05-30T21:00:00.000Z',
+					files: [
+						{ filename: 'TMPL001.docx', language: 'en' }
+					]
+				},
+			],
+
 		};
 		var traverseForArray = function(target, name) {
 			var obj = target[name];
@@ -852,6 +872,47 @@
 		$scope.deletePlanLine = function(ev, index) {
 			var lines = $scope.formData.planLines;
 			lines.splice(index, 1);
+		};
+	}])
+	.controller('letterTemplatesController', ['$scope', 'dcmsData', function($scope, dcmsData) {
+		dcmsData.getEntities('letterTemplates').then(function(entities) {
+			$scope.entities = entities;
+		});
+	}])
+	.controller('letterTemplateEditorController', ['$scope', '$state', '$stateParams', '$mdDialog', 'dcmsData', function($scope, $state, $stateParams, $mdDialog, dcmsData) {
+		var id = $stateParams.id;
+		//dcmsData.getEntities('scorers').then(function(scorers) {
+			//$scope.scorers = scorers;
+			if (id == 'new') {
+				$scope.formData = { id: null };
+			}
+			else {
+				dcmsData.getEntity('letterTemplates', id).then(function(letterPlan) {
+					$scope.formData = letterPlan;
+				});
+			}
+		//});
+
+		var finish = function() {
+			$scope.formData = null;
+			$state.go('letterTemplates');
+		};
+		$scope.cancel = function() {
+			finish();
+		};
+		$scope.save = function() {
+			var data = $scope.formData;
+			if (data) {
+				var next = function(entity) {
+					finish();
+				};
+				if (data.id) {
+					dcmsData.updateEntity('letterTemplates', data).then(next);
+				}
+				else {
+					dcmsData.createEntity('letterTemplates', data).then(next);
+				}
+			}
 		};
 	}])
 	;
