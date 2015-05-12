@@ -1,33 +1,71 @@
 ﻿<h2>dashboard</h2>
 
-
-<h3>Settings</h3>
-<md-button><div ui-sref="settings">manage settings</div></md-button>
-
-<h3>Users</h3>
-<md-button><div ui-sref="newUser">Create new</div></md-button>
-<div>Properties: Active, Role, Managing User, Operating Unit</div>
-<div>Roles: #DCMS_COLLECTION_AGENT_USER</div>
-<md-button><div ui-sref="searchUsers">Search users</div></md-button>
-<div>Criteria: Number, Name, Organization</div>
-
-<h3>Collection Agents</h3>
-<md-button><div ui-sref="newCollectionAgent">Create new</div></md-button>
-<div>Collection agents are members of group a group with role #DCMS_COLLECTION_AGENT_GROUP</div>
-<div>Properties: Number, Name, Code, Email, Description, Active</div>
-<div>Members</div>
-
-<h3>Aging buckets</h3>
-<md-button><div ui-sref="buckets">manage buckets</div></md-button>
-
-<h3>Scoring parts</h3>
-<md-button><div ui-sref="scoringParts">manage scoring parts</div></md-button>
-
-<h3>Scorers</h3>
-<md-button><div ui-sref="scorers">manage scorers</div></md-button>
-
-<h3>Letters templates</h3>
-<md-button><div ui-sref="letterTemplates">manage letter templates</div></md-button>
-
-<h3>Letter plans</h3>
-<md-button><div ui-sref="letterPlans">manage plans</div></md-button>
+<md-list>
+    <md-list-item class="md-2-line" ng-click="noop()">
+        <md-icon md-svg-icon="core:settings"></md-icon>
+        <div class="md-list-item-text" ui-sref="settings">
+            <h3>Settings</h3>
+            <p>The settings...</p>
+        </div>
+    </md-list-item>
+    <md-list-item class="md-3-line" ng-click="noop()">
+        <md-icon md-svg-icon="core:person"></md-icon>
+        <div class="md-list-item-text" ui-sref="newUser">
+            <h3>Create new user</h3>
+            <p>Properties: Active, Role, Managing User, Operating Unit</p>
+            <p>Roles: #DCMS_COLLECTION_AGENT_USER</p>
+        </div>
+    </md-list-item>
+    <md-list-item class="md-2-line" ng-click="noop()">
+        <md-icon md-svg-icon="core:person"></md-icon>
+        <div class="md-list-item-text" ui-sref="searchUsers">
+            <h3>Search users</h3>
+            <p>Criteria: Number, Name, Organization</p>
+        </div>
+    </md-list-item>
+    <md-list-item class="md-3-line" ng-click="noop()">
+        <md-icon md-svg-icon="core:person"></md-icon>
+        <div class="md-list-item-text" ui-sref="collectionAgents">
+            <h3>Collection Agents</h3>
+            <p>Collection agents are members of group a group with role #DCMS_COLLECTION_AGENT_GROUP</p>
+            <p>Properties: Number, Name, Code, Email, Description, Active</p>
+        </div>
+    </md-list-item>
+    <md-list-item class="md-2-line" ng-click="noop()">
+        <md-icon md-svg-icon="core:menu"></md-icon>
+        <div class="md-list-item-text" ui-sref="buckets">
+            <h3>Aging buckets</h3>
+            <p>Aging buckets are time periods used to review and report on open receivables.</p>
+        </div>
+    </md-list-item>
+    <md-list-item class="md-2-line" ng-click="noop()">
+        <md-icon md-svg-icon="core:menu"></md-icon>
+        <div class="md-list-item-text" ui-sref="scoringParts">
+            <h3>Scoring parts</h3>
+            <p>A scoring part uses a rule, a virtual resource or an expression to return a score value.</p>
+        </div>
+    </md-list-item>
+    <md-list-item class="md-3-line" ng-click="noop()">
+        <md-icon md-svg-icon="core:menu"></md-icon>
+        <div class="md-list-item-text" ui-sref="scorers">
+            <h3>Scorers</h3>
+            <p>(a) Scorers determine transaction status: current, delinquent, and pre-delinquent.</p>
+            <p>(b) Scorers determine the value of each customer at an operational data level.</p>
+        </div>
+    </md-list-item>
+    <md-list-item class="md-3-line" ng-click="noop()">
+        <md-icon md-svg-icon="core:menu"></md-icon>
+        <div class="md-list-item-text" ui-sref="letterTemplates">
+            <h3>Letter templates</h3>
+            <p>A letter template provides the form and text for the correspondence.</p>
+            <p>Uses a virtual resource to get the customer-related data that appears in the letter.</p>
+        </div>
+    </md-list-item>
+    <md-list-item class="md-2-line" ng-click="noop()">
+        <md-icon md-svg-icon="core:menu"></md-icon>
+        <div class="md-list-item-text" ui-sref="letterPlans">
+            <h3>Letter plans</h3>
+            <p>A plan is composed of one or more score ranges and correspondence templates associated with aging bucket lines.</p>
+        </div>
+    </md-list-item>
+</md-list>
