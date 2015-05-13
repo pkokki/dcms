@@ -1,0 +1,48 @@
+<div layout="row" layout-align="center center">
+    <h2>Submit a new job task</h2>
+    <span flex></span>
+    <div ui-sref="jobTasks">
+        <md-button class="md-icon-button" aria-label="back" title="jobs home">
+            <md-icon md-svg-icon="core:arrow_back"></md-icon>
+        </md-button>
+    </div>
+    <md-button class="md-icon-button" aria-label="submit" title="submit job"
+        ng-click="submit($event)" ng-disabled="!canSubmitRequest()">
+        <md-icon md-svg-icon="core:send"></md-icon>
+    </md-button>
+</div>
+
+<md-list>
+    <md-list-item class="md-2-line" ng-click="selectType($event)">
+        <div class="md-list-item-text">
+            <h3>Job task name</h3>
+            <p>{{ request.jobTaskName || 'Undefined' }}</p>
+        </div>
+    </md-list-item>
+    <md-list-item class="md-2-line" ng-show="request.arguments.length">
+        <div class="md-list-item-text">
+            <h3>Parameters</h3>
+            <p>Define job task parameters</p>
+        </div>
+    </md-list-item>
+    <md-list-item ng-repeat="arg in request.arguments">
+        <div class="md-list-item-text" flex>
+            <md-input-container>
+                <label>{{arg.name}}</label>
+                <input ng-model="arg.value"></input>
+            </md-input-container>
+        </div>
+    </md-list-item>
+    <md-list-item class="md-2-line" ng-click="noop()">
+        <div class="md-list-item-text">
+            <h3>Language</h3>
+            <p>{{ request.language }}</p>
+        </div>
+    </md-list-item>
+    <md-list-item class="md-2-line" ng-click="noop()">
+        <div class="md-list-item-text">
+            <h3>Schedule</h3>
+            <p>{{ request.schedule.type }}</p>
+        </div>
+    </md-list-item>
+</md-list>

@@ -1,0 +1,42 @@
+<div ui-view>
+    <div layout="row" layout-align="center center">
+        <h2>job tasks</h2>
+        <span flex></span>
+        <div ui-sref="jobTasks" ui-sref-active-eq="ng-hide">
+            <md-button class="md-icon-button" aria-label="back" title="jobs home">
+                <md-icon md-svg-icon="core:arrow_back"></md-icon>
+            </md-button>
+        </div>
+    </div>
+
+    <md-list>
+        <md-list-item class="md-2-line" ng-click="noop()">
+            <md-icon md-svg-icon="core:menu"></md-icon>
+            <div class="md-list-item-text" ui-sref="jobTasks.types">
+                <h3>Types</h3>
+                <p>Manage task types.</p>
+            </div>
+        </md-list-item>
+        <md-list-item class="md-2-line" ng-click="noop()">
+            <md-icon md-svg-icon="core:calendar-today"></md-icon>
+            <div class="md-list-item-text" ui-sref="jobTasks.run">
+                <h3>Run...</h3>
+                <p>Schedule or execute a job task by submitting a new job request.</p>
+            </div>
+        </md-list-item>
+        <md-list-item class="md-2-line" ng-click="noop()">
+            <md-icon md-svg-icon="core:calendar-check"></md-icon>
+            <div class="md-list-item-text" ui-sref="jobTasks.logs">
+                <h3>Execution logs</h3>
+                <p>View job task execution logs.</p>
+            </div>
+        </md-list-item>
+        <md-list-item class="md-2-line" ng-click="noop()">
+            <md-icon md-svg-icon="core:settings"></md-icon>
+            <div class="md-list-item-text" ui-sref="jobTasks.settings">
+                <h3>Settings</h3>
+                <p>The settings...</p>
+            </div>
+        </md-list-item>
+    </md-list>
+</div>

@@ -126,6 +126,25 @@
 				templateUrl: 'letterTemplateEditor.html',
 				controller: 'letterTemplateEditorController'
 			})
+			.state('jobTasks', {
+				url: '/jobTasks',
+				templateUrl: 'jobTasks.html',
+			})
+			.state('jobTasks.types', {
+				url: '/types',
+				templateUrl: 'jobTasks.types.html',
+				controller: 'jobTasksTypesController'
+			})
+			.state('jobTasks.typeEditor', {
+				url: '/types/:id',
+				templateUrl: 'jobTasks.typeEditor.html',
+				controller: 'jobTasksTypeEditorController'
+			})
+			.state('jobTasks.run', {
+				url: '/run',
+				templateUrl: 'jobTasks.run.html',
+				controller: 'jobTasksRunController'
+			})
 		;
 	}])
 	.run(['$rootScope', '$state', 'spa', function ($rootScope, $state, spa) {
@@ -255,7 +274,47 @@
 					]
 				},
 			],
-
+			jobTasksTypes: [
+				{ Id: 1, Code: 'JT01', Name: 'job type #1', Description: 'description of job type #1', Definition: {
+					Properties: {
+						X: { DataType: 'int', Default: 10 },
+						Y: { DataType: 'string' },
+					},
+					InMappings: [
+						{ Source: 'arguments.X', Target: 'container.Properties.X' },
+						{ Source: 'arguments.Y', Target: 'container.Properties.Y' },
+					],
+					Nodes: {
+						N1: { Type: 'StartEvent' },
+						N2: { Type: 'CodeActivity', Parameters: { Operation: 'JOB_OPERATION_01', Arguments: 'container.Properties' } },
+						N3: { Type: 'EndEvent' },
+					},
+					Transitions: [
+						{ Source: 'N1', Target: 'N2' },
+						{ Source: 'N2', Target: 'N3' },
+					]
+				}},
+				{ Id: 1, Code: 'JT02', Name: 'job type #2', Description: 'description of job type #2', Definition: {
+					Properties: {
+						X: { DataType: 'int', Default: 10 },
+						Y: { DataType: 'string' },
+					},
+					InMappings: [
+						{ Source: 'arguments.X', Target: 'container.Properties.X' },
+						{ Source: 'arguments.Y', Target: 'container.Properties.Y' },
+					],
+					Nodes: {
+						N1: { Type: 'StartEvent' },
+						N2: { Type: 'CodeActivity', Parameters: { Operation: 'JOB_OPERATION_02', Arguments: 'container.Properties' } },
+						N3: { Type: 'EndEvent' },
+					},
+					Transitions: [
+						{ Source: 'N1', Target: 'N2' },
+						{ Source: 'N2', Target: 'N3' },
+					]
+				}},
+			],
+			jobTasks: []
 		};
 		var traverseForArray = function(target, name) {
 			var obj = target[name];
@@ -285,14 +344,15 @@
 						reject('Entity type "' + type + '" not found.')
 				});
 			},
-			getEntity: function(type, id) {
+			getEntity: function(type, id, key) {
 				return $q(function(resolve, reject) {
+					key = key || 'id';
 					var entities = traverseForArray(data, type);
 					if (entities) {
 						var found = null;
 						for (var i = 0; i < entities.length; i++) {
 							var entity = entities[i];
-							if (entity && entity.id == id) {
+							if (entity && entity[key] == id) {
 								found = entity;
 								break;
 							}
@@ -304,17 +364,19 @@
 					}
 				});
 			},
-			createEntity: function(type, entity) {
+			createEntity: function(type, entity, key) {
 				return $q(function(resolve, reject) {
+					key = key || 'id';
 					var entities = traverseForArray(data, type);
 					if (entities) {
 						var max = 0;
 						for (var i = 0; i < entities.length; i++) {
-							max = Math.max(max, entities[i].id);
+							max = Math.max(max, entities[i][key]);
 						}
-						var newObj = { id: max + 1 };
+						var newObj = {};
+						newObj[key] = max + 1;
 						var input = JSON.parse(JSON.stringify(entity));
-						delete input.id;
+						delete input[key];
 						angular.extend(newObj, input);
 						entities.push(newObj);
 						resolve(JSON.parse(JSON.stringify(newObj)));
@@ -324,14 +386,15 @@
 					}
 				});
 			},
-			updateEntity: function(type, entity) {
+			updateEntity: function(type, entity, key) {
 				return $q(function(resolve, reject) {
-					if (entity && entity.id) {
+					key = key || 'id';
+					if (entity && entity[key]) {
 						var entities = traverseForArray(data, type);
 						if (entities) {
 							var found = null;
 							for (var i = 0; i < entities.length; i++) {
-								if(entities[i].id == entity.id) {
+								if(entities[i][key] == entity[key]) {
 									found = entities[i];
 									break;
 								}
@@ -342,7 +405,7 @@
 								resolve(JSON.parse(JSON.stringify(found)));
 							}
 							else {
-								reject('Entity with id "' + id + '" and type "'
+								reject('Entity with key "' + entity[key] + '" and type "'
 									+ type + '" not exists.');
 							}
 						}
@@ -351,18 +414,19 @@
 						}
 					}
 					else {
-						reject('Entity is null or has no id.');
+						reject('Entity is null or has no key.');
 					}
 				});
 			},
-			deleteEntity: function(type, id) {
+			deleteEntity: function(type, id, key) {
 				return $q(function(resolve, reject) {
+					key = key || 'id';
 					var entities = traverseForArray(data, type);
 					if (entities) {
 						var target = null;
 						for (var i = 0; i < entities.length; i++) {
 							var entity = entities[i];
-							if (entity && entity.id == id) {
+							if (entity && entity[key] == id) {
 								entities.splice(i, 1);
 								target = entity;
 								break;
@@ -915,4 +979,193 @@
 			}
 		};
 	}])
+
+	.service('dcmsJobTaskTypeMapper', [function() {
+		return {
+			fromSpecification: function(specification) {
+				var data = {};
+				if (specification) {
+					data.id = specification.Id;
+					data.name = specification.Name;
+					data.code = specification.Code;
+					data.description = specification.Description;
+					if (specification.Definition) {
+						if (specification.Definition.Properties) {
+							var args = [];
+							for (var propName in specification.Definition.Properties) {
+								var prop = specification.Definition.Properties[propName];
+								args.push({
+									name: propName,
+									type: prop.DataType,
+									default: prop.Default,
+								});
+							}
+							data.arguments = args;
+						}
+						if (specification.Definition.Nodes) {
+							for (var nodeName in specification.Definition.Nodes) {
+								var node = specification.Definition.Nodes[nodeName];
+								if (node.Type == 'CodeActivity') {
+									if (node.Parameters) {
+										data.operation = node.Parameters.Operation;
+									}
+									break;
+								}
+							}
+						}
+					}
+				}
+				return data;
+			},
+			toSpecification: function(jobTask) {
+				var specification = {
+					Name: jobTask.name,
+					Code: jobTask.code,
+					Description: jobTask.description,
+					Definition: {
+						Nodes: {
+							N1: { Type: 'StartEvent' },
+							N2: { Type: 'CodeActivity', Parameters: { Operation: jobTask.operation, Arguments: 'container.Properties' } },
+							N3: { Type: 'EndEvent' },
+						},
+						Transitions: [
+							{ Source: 'N1', Target: 'N2' },
+							{ Source: 'N2', Target: 'N3' },
+						]
+					}
+				};
+				if (jobTask.id)
+					specification.Id = jobTask.id;
+				if (jobTask.arguments) {
+					properties = {};
+					inMappings = [];
+					for (var i = 0; i < jobTask.arguments.length; i++) {
+						var arg = jobTask.arguments[i];
+						properties[arg.name] = { DataType: arg.type, Default: arg.default };
+						inMappings.push({
+							Source: 'arguments.' + arg.name,
+							Target: 'container.Properties.' + arg.name
+						});
+					}
+					specification.Definition.Properties = properties;
+					specification.Definition.InMappings = inMappings;
+				}
+				return specification;
+			}
+		};
+	}])
+	.controller('jobTasksTypesController', ['$scope', 'dcmsData', 'dcmsJobTaskTypeMapper', function($scope, dcmsData, dcmsJobTaskTypeMapper) {
+		dcmsData.getEntities('jobTasksTypes').then(function(specifications) {
+			var entities = [];
+			for (var i = 0; i < specifications.length; i++) {
+				entities.push(dcmsJobTaskTypeMapper.fromSpecification(specifications[i]));
+			}
+			$scope.entities = entities;
+		});
+	}])
+	.controller('jobTasksTypeEditorController', ['$scope', '$state', '$stateParams', 'dcmsData', 'dcmsJobTaskTypeMapper', function($scope, $state, $stateParams, dcmsData, dcmsJobTaskTypeMapper) {
+		var id = $stateParams.id;
+		//dcmsData.getEntities('scorers').then(function(scorers) {
+			//$scope.scorers = scorers;
+			if (id == 'new') {
+				$scope.formData = { id: null };
+			}
+			else {
+				dcmsData.getEntity('jobTasksTypes', id, 'Id').then(function(entity) {
+					$scope.formData = dcmsJobTaskTypeMapper.fromSpecification(entity);
+				});
+			}
+		//});
+
+		var finish = function() {
+			$scope.formData = null;
+			$state.go('jobTasks.types');
+		};
+		$scope.cancel = function() {
+			finish();
+		};
+		$scope.save = function() {
+			var spec = dcmsJobTaskTypeMapper.toSpecification($scope.formData);
+			if (spec) {
+				var next = function(entity) {
+					finish();
+				};
+				if (spec.Id) {
+					dcmsData.updateEntity('jobTasksTypes', spec, 'Id').then(next);
+				}
+				else {
+					dcmsData.createEntity('jobTasksTypes', spec, 'Id').then(next);
+				}
+			}
+		};
+	}])
+	.controller('jobTasksRunController', ['$scope', '$mdDialog', 'dcmsData', 'dcmsJobTaskTypeMapper', function($scope, $mdDialog, dcmsData, dcmsJobTaskTypeMapper) {
+		var request = {
+			jobTaskName: null,
+			language: 'Default',
+			schedule : {
+				type: 'ASAP'
+			}
+		};
+
+		$scope.request = request;
+		$scope.canSubmitRequest = function() {
+			return request.jobTaskName;
+		};
+		$scope.selectType = function(ev) {
+			$mdDialog.show({
+				controller: ['$scope', '$mdDialog', function($scope, $mdDialog) {
+					dcmsData.getEntities('jobTasksTypes').then(function(specifications) {
+						var items = [];
+						for (var i = 0; i < specifications.length; i++) {
+							items.push(dcmsJobTaskTypeMapper.fromSpecification(specifications[i]));
+						}
+						$scope.items = items;
+					});
+					$scope.cancel = function() {
+						$mdDialog.cancel();
+					}
+					$scope.select = function(data) {
+						$mdDialog.hide(data);
+					}
+				}],
+				templateUrl: 'jobTask.typeSelector.html',
+				targetEvent: ev,
+			}).then(function(taskType) {
+				request.jobTaskName = taskType.name;
+				request.arguments = [];
+
+				var args = taskType.arguments;
+				if (args && args.length) {
+					for (var i=0;i<args.length;i++) {
+						var arg = args[i];
+						request.arguments.push({
+							name: arg.name,
+							value: arg.default,
+						});
+					}
+				}
+			});
+		};
+		$scope.submit = function(ev) {
+			dcmsData.createEntity('jobTasks', request).then(function(entity) {
+				$mdDialog.show(
+					$mdDialog.alert()
+						.title('Success')
+						.content('The job submitted with id ' + entity.id + '.')
+						.ok('OK')
+						.targetEvent(ev)
+				);
+			}, function(err) {
+				$mdDialog.show(
+					$mdDialog.alert()
+						.title('Error')
+						.content('The job fail to submit: ' + err)
+						.ok('OK')
+						.targetEvent(ev)
+				);
+			});
+		};
+	}])
+
 	;
