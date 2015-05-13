@@ -275,18 +275,24 @@
 				},
 			],
 			jobTasksTypes: [
-				{ Id: 1, Code: 'JT01', Name: 'job type #1', Description: 'description of job type #1', Definition: {
+				{
+					Id: 101, Code: 'DC01', Name: 'Scoring Engine',
+					Description: 'Scores and creates delinquencies, and scores customers, accounts, or bill-to locations. Can have up to four scorers to the job instance.', Definition: {
 					Properties: {
-						X: { DataType: 'int', Default: 10 },
-						Y: { DataType: 'string' },
+						Scorer1: { DataType: 'int' },
+						Scorer2: { DataType: 'int' },
+						Scorer3: { DataType: 'int' },
+						Scorer4: { DataType: 'int' },
 					},
 					InMappings: [
-						{ Source: 'arguments.X', Target: 'container.Properties.X' },
-						{ Source: 'arguments.Y', Target: 'container.Properties.Y' },
+						{ Source: 'arguments.Scorer1', Target: 'container.Properties.Scorer1' },
+						{ Source: 'arguments.Scorer2', Target: 'container.Properties.Scorer2' },
+						{ Source: 'arguments.Scorer3', Target: 'container.Properties.Scorer3' },
+						{ Source: 'arguments.Scorer4', Target: 'container.Properties.Scorer4' },
 					],
 					Nodes: {
 						N1: { Type: 'StartEvent' },
-						N2: { Type: 'CodeActivity', Parameters: { Operation: 'JOB_OPERATION_01', Arguments: 'container.Properties' } },
+						N2: { Type: 'CodeActivity', Parameters: { Operation: 'ScoringEngine', Arguments: 'container.Properties' } },
 						N3: { Type: 'EndEvent' },
 					},
 					Transitions: [
@@ -294,18 +300,138 @@
 						{ Source: 'N2', Target: 'N3' },
 					]
 				}},
-				{ Id: 1, Code: 'JT02', Name: 'job type #2', Description: 'description of job type #2', Definition: {
+				{
+					Id: 102, Code: 'DC02', Name: 'Promise Reconciliation',
+					Description: 'Verifies if payments were posted for invoices with promises; creates broken promise items for universal task list.', Definition: {
+					Properties: {},
+					InMappings: [],
+					Nodes: {
+						N1: { Type: 'StartEvent' },
+						N2: { Type: 'CodeActivity', Parameters: { Operation: 'PromiseReconciliation', Arguments: 'container.Properties' } },
+						N3: { Type: 'EndEvent' },
+					},
+					Transitions: [
+						{ Source: 'N1', Target: 'N2' },
+						{ Source: 'N2', Target: 'N3' },
+					]
+				}},
+				{
+					Id: 103, Code: 'DC03', Name: 'Send Letters for Delinquent Customers',
+					Description: 'Compares the score of the object with the active letter plan and sends the letters for all appropriate delinquent customers.', Definition: {
+					Properties: {},
+					InMappings: [],
+					Nodes: {
+						N1: { Type: 'StartEvent' },
+						N2: { Type: 'CodeActivity', Parameters: { Operation: 'SendLettersForDelinquentCustomers', Arguments: 'container.Properties' } },
+						N3: { Type: 'EndEvent' },
+					},
+					Transitions: [
+						{ Source: 'N1', Target: 'N2' },
+						{ Source: 'N2', Target: 'N3' },
+					]
+				}},
+				{
+					Id: 104, Code: 'DC04', Name: 'Broken Promise Callbacks',
+					Description: 'Reviews the letter plan and creates all necessary callback tasks for delinquent customers.', Definition: {
+					Properties: {},
+					InMappings: [],
+					Nodes: {
+						N1: { Type: 'StartEvent' },
+						N2: { Type: 'CodeActivity', Parameters: { Operation: 'BrokenPromiseCallbacks', Arguments: 'container.Properties' } },
+						N3: { Type: 'EndEvent' },
+					},
+					Transitions: [
+						{ Source: 'N1', Target: 'N2' },
+						{ Source: 'N2', Target: 'N3' },
+					]
+				}},
+				{
+					Id: 105, Code: 'DC05', Name: 'Collection Strategy Workflow',
+					Description: 'Initiates the execution of assigned strategies and continues monitoring strategies in progress.', Definition: {
+					Properties: {},
+					InMappings: [],
+					Nodes: {
+						N1: { Type: 'StartEvent' },
+						N2: { Type: 'CodeActivity', Parameters: { Operation: 'CollectionStrategyWorkflow', Arguments: 'container.Properties' } },
+						N3: { Type: 'EndEvent' },
+					},
+					Transitions: [
+						{ Source: 'N1', Target: 'N2' },
+						{ Source: 'N2', Target: 'N3' },
+					]
+				}},
+				{
+					Id: 106, Code: 'DC06', Name: 'Strategy Fulfillment Mailer',
+					Description: 'Executes automated correspondence work items for strategies.', Definition: {
+					Properties: {},
+					InMappings: [],
+					Nodes: {
+						N1: { Type: 'StartEvent' },
+						N2: { Type: 'CodeActivity', Parameters: { Operation: 'StrategyFulfillmentMailer', Arguments: 'container.Properties' } },
+						N3: { Type: 'EndEvent' },
+					},
+					Transitions: [
+						{ Source: 'N1', Target: 'N2' },
+						{ Source: 'N2', Target: 'N3' },
+					]
+				}},
+				{
+					Id: 107, Code: 'DC07', Name: 'Strategy Management',
+					Description: 'Compares the object`s score with available strategies` ranks and assign appropriate strategies. It also creates work items in active strategies.', Definition: {
+					Properties: {},
+					InMappings: [],
+					Nodes: {
+						N1: { Type: 'StartEvent' },
+						N2: { Type: 'CodeActivity', Parameters: { Operation: 'StrategyManagement', Arguments: 'container.Properties' } },
+						N3: { Type: 'EndEvent' },
+					},
+					Transitions: [
+						{ Source: 'N1', Target: 'N2' },
+						{ Source: 'N2', Target: 'N3' },
+					]
+				}},
+				{
+					Id: 201, Code: 'DC08', Name: 'Populate universal task summaries',
+					Description: 'Updates delinquent customer data in the Collector`s Work Queue.', Definition: {
 					Properties: {
-						X: { DataType: 'int', Default: 10 },
-						Y: { DataType: 'string' },
+						FromDate: { DataType: 'date', Description: 'Leave the parameter blank to run the program in total refresh mode or enter the date the program last ran for incremental mode.' },
 					},
 					InMappings: [
-						{ Source: 'arguments.X', Target: 'container.Properties.X' },
-						{ Source: 'arguments.Y', Target: 'container.Properties.Y' },
+						{ Source: 'arguments.FromDate', Target: 'container.Properties.FromDate' },
 					],
 					Nodes: {
 						N1: { Type: 'StartEvent' },
-						N2: { Type: 'CodeActivity', Parameters: { Operation: 'JOB_OPERATION_02', Arguments: 'container.Properties' } },
+						N2: { Type: 'CodeActivity', Parameters: { Operation: 'PopulateUniversalTaskSummaries', Arguments: 'container.Properties' } },
+						N3: { Type: 'EndEvent' },
+					},
+					Transitions: [
+						{ Source: 'N1', Target: 'N2' },
+						{ Source: 'N2', Target: 'N3' },
+					]
+				}},
+				{
+					Id: 202, Code: 'DC09', Name: 'Clear Delinquency Buffers',
+					Description: 'Clears the buffer tables used in scoring. Run it only if the scoring job stops before completing.', Definition: {
+					Properties: {},
+					InMappings: [],
+					Nodes: {
+						N1: { Type: 'StartEvent' },
+						N2: { Type: 'CodeActivity', Parameters: { Operation: 'ClearDelinquencyBuffers', Arguments: 'container.Properties' } },
+						N3: { Type: 'EndEvent' },
+					},
+					Transitions: [
+						{ Source: 'N1', Target: 'N2' },
+						{ Source: 'N2', Target: 'N3' },
+					]
+				}},
+				{
+					Id: 203, Code: 'DC10', Name: 'Purge Score History',
+					Description: 'Run this after scoring if you do not want to save historical scoring data.', Definition: {
+					Properties: {},
+					InMappings: [],
+					Nodes: {
+						N1: { Type: 'StartEvent' },
+						N2: { Type: 'CodeActivity', Parameters: { Operation: 'ClearDelinquencyBuffers', Arguments: 'container.Properties' } },
 						N3: { Type: 'EndEvent' },
 					},
 					Transitions: [
