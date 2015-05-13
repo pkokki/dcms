@@ -250,10 +250,44 @@
 				{ id: 1, name:'delinquencies amount', description: 'total delinquencies amount for account', enabled: true, userDefined: false, type: 'rule', value: null },
 				{ id: 2, name:'customer since', description: 'time span in years', enabled: false, userDefined: false, type: 'resx', value: null },
 				{ id: 3, name:'number of delinquencies', description: 'count of records', enabled: true, userDefined: false, type: 'expr', value: null },
+				{ id: 4, name:'due date is greater than today', description: '', enabled: true, userDefined: false, type: 'expr', value: '@.dueDate > $.today' },
 			],
 			scorers: [
-				{ id: 1, name:'default dunning scorer', description: 'a scorer ', enabled: true, userDefined: false, level: 'BillTo', minScore: 0, maxScore: 100, weightRequired: true,
-				parts: [{ id: 1, name:'delinquencies amount', weight: 70 }, { id: 3, name:'number of delinquencies', weight: 30 }] },
+				{
+					id: 1001, name:'Customer Scorer',
+					description: 'Scores the party (customer). Displays the score in the Collections Score field in the Collections Header.',
+					enabled: true, userDefined: false,
+					level: 'Customer', segment: 'Delinquent Parties Filter',
+					minScore: 0, maxScore: 100, weightRequired: true,
+					parts: []
+				},
+				{
+					id: 1002, name:'Account Scorer',
+					description: 'Scores the account. Displays the score in the Score field on the Accounts tab.',
+					enabled: true, userDefined: false,
+					level: 'Account', segment: 'Accounts Filter',
+					minScore: 0, maxScore: 100, weightRequired: true,
+					parts: []
+				},
+				{
+					id: 1003, name:'Bill To Scorer',
+					description: 'Scores the Bill To sites.',
+					enabled: true, userDefined: false,
+					level: 'BillTo', segment: 'Delinquent Bill Site To Filter',
+					minScore: 0, maxScore: 100, weightRequired: true,
+					parts: []
+				},
+				{
+					id: 1004, name:'Delinquency Status Determination',
+					description: 'Scores transactions to determine status of current or delinquent.',
+					enabled: true, userDefined: false,
+					level: 'Transactions', segment: 'Invoice Delinquency Filter',
+					minScore: 0, maxScore: 100, weightRequired: false,
+					parts: [ { id: 4, name: 'due date is greater than today' }]
+				},
+				{ id: 1, name:'custom scorer with two parts', description: 'a scorer ', enabled: true, userDefined: true,
+				  level: 'BillTo', minScore: 0, maxScore: 100, weightRequired: true,
+				  parts: [{ id: 1, name:'delinquencies amount', weight: 70 }, { id: 3, name:'number of delinquencies', weight: 30 }] },
 			],
 			letterPlans: [
 				{ id: 1, name: 'plan #1', description: 'plan #1 description', level: 'Account', enabled: true, scorerId: 1, bucketId: 1 },
@@ -318,8 +352,16 @@
 				{
 					Id: 103, Code: 'DC03', Name: 'Send Letters for Delinquent Customers',
 					Description: 'Compares the score of the object with the active letter plan and sends the letters for all appropriate delinquent customers.', Definition: {
-					Properties: {},
-					InMappings: [],
+					Properties: {
+						PlanId: { DataType: 'int' },
+						FromDate: { DataType: 'date' },
+						Preliminary: { DataType: 'boolean' },
+					},
+					InMappings: [
+						{ Source: 'arguments.PlanId', Target: 'container.Properties.PlanId' },
+						{ Source: 'arguments.FromDate', Target: 'container.Properties.FromDate' },
+						{ Source: 'arguments.Preliminary', Target: 'container.Properties.Preliminary' },
+					],
 					Nodes: {
 						N1: { Type: 'StartEvent' },
 						N2: { Type: 'CodeActivity', Parameters: { Operation: 'SendLettersForDelinquentCustomers', Arguments: 'container.Properties' } },
