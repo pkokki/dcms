@@ -145,6 +145,35 @@
 				templateUrl: 'jobTasks.run.html',
 				controller: 'jobTasksRunController'
 			})
+			.state('targetGroups', {
+				url: '/targetGroups',
+				templateUrl: 'targetGroups.html',
+				controller: 'targetGroupsController'
+			})
+			.state('targetGroupEditor', {
+				url: '/targetGroups/:id',
+				templateUrl: 'targetGroupEditor.html',
+				controller: 'targetGroupEditorController'
+			})
+			.state('strategies', {
+				url: '/strategies',
+				templateUrl: 'strategies.html',
+				controller: 'strategiesController'
+			})
+			.state('strategyEditor', {
+				url: '/strategies/:id',
+				templateUrl: 'strategyEditor.html',
+				controller: 'strategyEditorController'
+			})
+			.state('strategyDesigner', {
+				url: '/strategies/:id/designer',
+				templateUrl: 'strategyDesigner.html',
+				controller: 'strategyDesignerController'
+			})
+			.state('campaigns', {
+				url: '/campaigns',
+				templateUrl: 'campaigns.html',
+			})
 		;
 	}])
 	.run(['$rootScope', '$state', 'spa', function ($rootScope, $state, spa) {
@@ -308,9 +337,9 @@
 					]
 				},
 			],
-			jobTasksTypes: [
+			jobTasksTypes: /* CaseSpecifications with Code like #DC___ */[
 				{
-					Id: 101, Code: 'DC01', Name: 'Scoring Engine',
+					Id: 101, Code: '#DC01', Name: 'Scoring Engine',
 					Description: 'Scores and creates delinquencies, and scores customers, accounts, or bill-to locations. Can have up to four scorers to the job instance.', Definition: {
 					Properties: {
 						Scorer1: { DataType: 'int' },
@@ -335,7 +364,7 @@
 					]
 				}},
 				{
-					Id: 102, Code: 'DC02', Name: 'Promise Reconciliation',
+					Id: 102, Code: '#DC02', Name: 'Promise Reconciliation',
 					Description: 'Verifies if payments were posted for invoices with promises; creates broken promise items for universal task list.', Definition: {
 					Properties: {},
 					InMappings: [],
@@ -350,7 +379,7 @@
 					]
 				}},
 				{
-					Id: 103, Code: 'DC03', Name: 'Send Letters for Delinquent Customers',
+					Id: 103, Code: '#DC03', Name: 'Send Letters for Delinquent Customers',
 					Description: 'Compares the score of the object with the active letter plan and sends the letters for all appropriate delinquent customers.', Definition: {
 					Properties: {
 						PlanId: { DataType: 'int' },
@@ -373,7 +402,7 @@
 					]
 				}},
 				{
-					Id: 104, Code: 'DC04', Name: 'Broken Promise Callbacks',
+					Id: 104, Code: '#DC04', Name: 'Broken Promise Callbacks',
 					Description: 'Reviews the letter plan and creates all necessary callback tasks for delinquent customers.', Definition: {
 					Properties: {},
 					InMappings: [],
@@ -388,7 +417,7 @@
 					]
 				}},
 				{
-					Id: 105, Code: 'DC05', Name: 'Collection Strategy Workflow',
+					Id: 105, Code: '#DC05', Name: 'Collection Strategy Workflow',
 					Description: 'Initiates the execution of assigned strategies and continues monitoring strategies in progress.', Definition: {
 					Properties: {},
 					InMappings: [],
@@ -403,7 +432,7 @@
 					]
 				}},
 				{
-					Id: 106, Code: 'DC06', Name: 'Strategy Fulfillment Mailer',
+					Id: 106, Code: '#DC06', Name: 'Strategy Fulfillment Mailer',
 					Description: 'Executes automated correspondence work items for strategies.', Definition: {
 					Properties: {},
 					InMappings: [],
@@ -418,7 +447,7 @@
 					]
 				}},
 				{
-					Id: 107, Code: 'DC07', Name: 'Strategy Management',
+					Id: 107, Code: '#DC07', Name: 'Strategy Management',
 					Description: 'Compares the object`s score with available strategies` ranks and assign appropriate strategies. It also creates work items in active strategies.', Definition: {
 					Properties: {},
 					InMappings: [],
@@ -433,7 +462,7 @@
 					]
 				}},
 				{
-					Id: 201, Code: 'DC08', Name: 'Populate universal task summaries',
+					Id: 201, Code: '#DC08', Name: 'Populate universal task summaries',
 					Description: 'Updates delinquent customer data in the Collector`s Work Queue.', Definition: {
 					Properties: {
 						FromDate: { DataType: 'date', Description: 'Leave the parameter blank to run the program in total refresh mode or enter the date the program last ran for incremental mode.' },
@@ -452,7 +481,7 @@
 					]
 				}},
 				{
-					Id: 202, Code: 'DC09', Name: 'Clear Delinquency Buffers',
+					Id: 202, Code: '#DC09', Name: 'Clear Delinquency Buffers',
 					Description: 'Clears the buffer tables used in scoring. Run it only if the scoring job stops before completing.', Definition: {
 					Properties: {},
 					InMappings: [],
@@ -467,7 +496,7 @@
 					]
 				}},
 				{
-					Id: 203, Code: 'DC10', Name: 'Purge Score History',
+					Id: 203, Code: '#DC10', Name: 'Purge Score History',
 					Description: 'Run this after scoring if you do not want to save historical scoring data.', Definition: {
 					Properties: {},
 					InMappings: [],
@@ -482,7 +511,32 @@
 					]
 				}},
 			],
-			jobTasks: []
+			jobTasks: [],
+			targetGroups: [
+				{
+					id: 1,
+					name: 'default parties',
+					description: 'all party resources',
+					enabled: true,
+					bs: {
+						endpoint: 'http://atlasV5.azurewebsites.net/business/api/',
+						security: {
+							type: 'oauth2',
+							oauth2: {
+								uri: 'http://atlasV5.azurewebsites.net/id/api/',
+								username: 'DCMS_OPERATOR',
+								password: 'DCMS_OPERATOR'
+							}
+						},
+						resourceName: 'Party',
+						queryName: null,
+						viewName: null
+					}
+				},
+			],
+			strategies: [
+				{id: 1, name: 'default strategy', description: 'The default strategy description', enabled: true}
+			],
 		};
 		var traverseForArray = function(target, name) {
 			var obj = target[name];
@@ -1335,5 +1389,87 @@
 			});
 		};
 	}])
+	.controller('targetGroupsController', ['$scope', 'dcmsData', function($scope, dcmsData) {
+		dcmsData.getEntities('targetGroups').then(function(entities) {
+			$scope.entities = entities;
+		});
+	}])
+	.controller('targetGroupEditorController', ['$scope', '$state', '$stateParams', 'dcmsData', function($scope, $state, $stateParams, dcmsData) {
+		var id = $stateParams.id;
+		if (id == 'new') {
+			$scope.formData = {
+				id: null,
+			};
+		}
+		else {
+			dcmsData.getEntity('targetGroups', id).then(function(entity) {
+				$scope.formData = entity;
+			});
+		}
 
+		var finish = function() {
+			$scope.formData = null;
+			$state.go('targetGroups');
+		};
+		$scope.cancel = function() {
+			finish();
+		};
+		$scope.save = function() {
+			var data = $scope.formData;
+			if (data) {
+				var next = function(entity) {
+					finish();
+				};
+				if (data.id) {
+					dcmsData.updateEntity('targetGroups', data).then(next);
+				}
+				else {
+					dcmsData.createEntity('targetGroups', data).then(next);
+				}
+			}
+		};
+	}])
+	.controller('strategiesController', ['$scope', 'dcmsData', function($scope, dcmsData) {
+		dcmsData.getEntities('strategies').then(function(entities) {
+			$scope.entities = entities;
+		});
+	}])
+	.controller('strategyEditorController', ['$scope', '$state', '$stateParams', 'dcmsData', function($scope, $state, $stateParams, dcmsData) {
+		var id = $stateParams.id;
+		if (id == 'new') {
+			$scope.formData = {
+				id: null,
+			};
+		}
+		else {
+			dcmsData.getEntity('strategies', id).then(function(entity) {
+				$scope.formData = entity;
+			});
+		}
+
+		var finish = function() {
+			$scope.formData = null;
+			$state.go('strategies');
+		};
+		$scope.cancel = function() {
+			finish();
+		};
+		$scope.save = function() {
+			var data = $scope.formData;
+			if (data) {
+				var next = function(entity) {
+					finish();
+				};
+				if (data.id) {
+					dcmsData.updateEntity('strategies', data).then(next);
+				}
+				else {
+					dcmsData.createEntity('strategies', data).then(next);
+				}
+			}
+		};
+	}])
+	.controller('strategyDesignerController', ['$scope', '$state', '$stateParams', '$mdMedia', 'dcmsData', function($scope, $state, $stateParams, $mdMedia, dcmsData) {
+		$scope.canShowDesigner = $mdMedia('lg');
+	}])
 	;

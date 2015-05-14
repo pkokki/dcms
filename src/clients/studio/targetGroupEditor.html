@@ -1,0 +1,63 @@
+<div layout="row" layout-align="center center">
+    <h2>{{formData.name || 'New target group' }}</h2>
+    <span flex></span>
+    <md-button ng-click="cancel()">cancel</md-button>
+    <md-button ng-click="save();">save</md-button>
+</div>
+
+<form name="targetGroupForm">
+	<md-input-container>
+		<label>Name</label>
+		<input md-maxlength="30" required ng-model="formData.name"></input>
+	</md-input-container>
+	<md-input-container>
+		<label>Description</label>
+		<input md-maxlength="150" ng-model="formData.description"></input>
+	</md-input-container>
+	<md-switch ng-model="formData.enabled" aria-label="Enabled">
+		Enabled
+	</md-switch>
+
+    <md-subheader>BS information</md-subheader>
+    <div layout layout-align="start center">
+        <md-input-container flex>
+    		<label>atlas endpoint</label>
+            <input ng-model="formData.bs.endpoint"></input>
+    	</md-input-container>
+        <md-button>SELECT</md-button>
+    </div>
+    <md-subheader>Security</md-subheader>
+    <div layout>
+        <md-icon md-svg-icon="core:blank"></md-icon>
+        <div flex>
+            <md-input-container>
+        		<label>type</label>
+        		<input ng-model="formData.bs.security.type"></input>
+        	</md-input-container>
+            <md-input-container>
+        		<label>identity service uri</label>
+        		<input ng-model="formData.bs.security.oauth2.uri"></input>
+        	</md-input-container>
+            <md-input-container>
+        		<label>username</label>
+        		<input ng-model="formData.bs.security.oauth2.username"></input>
+        	</md-input-container>
+            <md-input-container>
+        		<label>password</label>
+        		<input ng-model="formData.bs.security.oauth2.password"></input>
+        	</md-input-container>
+        </div>
+    </div>
+    <md-input-container>
+		<label>resource name</label>
+		<input ng-model="formData.bs.resourceName"></input>
+	</md-input-container>
+    <md-input-container>
+		<label>query name</label>
+		<input ng-model="formData.bs.queryName"></input>
+	</md-input-container>
+    <md-input-container>
+		<label>view name</label>
+		<input ng-model="formData.bs.viewName"></input>
+	</md-input-container>
+</form>
