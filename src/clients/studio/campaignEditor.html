@@ -1,0 +1,35 @@
+<div layout="row" layout-align="center center">
+    <h2>{{formData.name || 'New campaign' }}</h2>
+    <span flex></span>
+    <md-button ng-click="cancel()">cancel</md-button>
+    <md-button ng-click="save();">save</md-button>
+</div>
+
+<form name="campaignForm">
+	<md-input-container>
+		<label>Name</label>
+		<input md-maxlength="30" required ng-model="formData.name"></input>
+	</md-input-container>
+	<md-input-container>
+		<label>Description</label>
+		<input md-maxlength="150" ng-model="formData.description"></input>
+	</md-input-container>
+	<md-switch ng-model="formData.enabled" aria-label="Enabled">
+		Enabled
+	</md-switch>
+
+    <div layout layout-align="start center">
+        <md-input-container flex>
+    		<label>Target group</label>
+    		<input ng-readonly="true" ng-model="formData.targetGroup.name"></input>
+    	</md-input-container>
+        <md-button>Select</md-button>
+    </div>
+    <div layout layout-align="start center">
+        <md-input-container flex>
+    		<label>Strategy</label>
+    		<input ng-readonly="true" ng-model="formData.strategy.name"></input>
+    	</md-input-container>
+        <md-button>Select</md-button>
+    </div>
+</form>

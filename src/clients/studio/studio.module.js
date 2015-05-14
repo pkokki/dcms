@@ -173,6 +173,12 @@
 			.state('campaigns', {
 				url: '/campaigns',
 				templateUrl: 'campaigns.html',
+				controller: 'campaignsController'
+			})
+			.state('campaignEditor', {
+				url: '/campaigns/:id',
+				templateUrl: 'campaignEditor.html',
+				controller: 'campaignEditorController'
 			})
 		;
 	}])
@@ -536,6 +542,12 @@
 			],
 			strategies: [
 				{id: 1, name: 'default strategy', description: 'The default strategy description', enabled: true}
+			],
+			campaigns: [{
+				id: 1, name: 'default campaign', description: 'The default campaign description', enabled: true,
+				targetGroup: { id: 1, name: 'default parties' },
+				strategy: { id: 1, name: 'default strategy' }
+			},
 			],
 		};
 		var traverseForArray = function(target, name) {
@@ -1471,5 +1483,45 @@
 	}])
 	.controller('strategyDesignerController', ['$scope', '$state', '$stateParams', '$mdMedia', 'dcmsData', function($scope, $state, $stateParams, $mdMedia, dcmsData) {
 		$scope.canShowDesigner = $mdMedia('lg');
+	}])
+	.controller('campaignsController', ['$scope', 'dcmsData', function($scope, dcmsData) {
+		dcmsData.getEntities('campaigns').then(function(entities) {
+			$scope.entities = entities;
+		});
+	}])
+	.controller('campaignEditorController', ['$scope', '$state', '$stateParams', 'dcmsData', function($scope, $state, $stateParams, dcmsData) {
+		var id = $stateParams.id;
+		if (id == 'new') {
+			$scope.formData = {
+				id: null,
+			};
+		}
+		else {
+			dcmsData.getEntity('campaigns', id).then(function(entity) {
+				$scope.formData = entity;
+			});
+		}
+
+		var finish = function() {
+			$scope.formData = null;
+			$state.go('campaigns');
+		};
+		$scope.cancel = function() {
+			finish();
+		};
+		$scope.save = function() {
+			var data = $scope.formData;
+			if (data) {
+				var next = function(entity) {
+					finish();
+				};
+				if (data.id) {
+					dcmsData.updateEntity('campaigns', data).then(next);
+				}
+				else {
+					dcmsData.createEntity('campaigns', data).then(next);
+				}
+			}
+		};
 	}])
 	;
