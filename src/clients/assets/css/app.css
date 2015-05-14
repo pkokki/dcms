@@ -1,1 +1,61 @@
+.sidebar .sidebar-header.header-cover {
+    background-repeat: no-repeat;
+    background-position: center center;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
 
+.top-bar {
+  height: 25px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.sidebar .sidebar-image img {
+    width: 54px;
+    height: 54px;
+    margin: 16px;
+    border-radius: 50%;
+    -webkit-transition: all 0.2s ease-in-out;
+    -o-transition: all 0.2s ease-in-out;
+    transition: all 0.2s ease-in-out;
+}
+
+.sidebar .sidebar-brand {
+    display: block;
+    height: 48px;
+    line-height: 48px;
+    padding: 0;
+    padding-left: 16px;
+    padding-right: 56px;
+    text-decoration: none;
+    clear: both;
+    font-weight: 500;
+    overflow: hidden;
+    -o-text-overflow: ellipsis;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    -webkit-transition: all 0.2s ease-in-out;
+    -o-transition: all 0.2s ease-in-out;
+    transition: all 0.2s ease-in-out;
+}
+.sidebar .sidebar-brand:hover,
+.sidebar .sidebar-brand:focus {
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    outline: none;
+}
+.sidebar .sidebar-brand:hover,
+.sidebar .sidebar-brand:focus {
+  text-decoration: none;
+}
+.sidebar .sidebar-brand {
+  color: #757575;
+  background-color: transparent;
+}
+.sidebar .sidebar-brand:hover,
+.sidebar .sidebar-brand:focus {
+  color: #212121;
+  background-color: rgba(0, 0, 0, 0.1);
+}
