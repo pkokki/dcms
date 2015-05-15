@@ -1,11 +1,32 @@
-<md-content>
+<div layout="column" layout-align="center center" layout-padding layout-margin
+    ng-show="!state.loaded && !state.error">
+    <md-progress-circular md-mode="indeterminate"></md-progress-circular>
+    <p>please wait...</p>
+</div>
+
+<div layout="column" layout-align="center center" layout-padding
+    style="color: rgb(244,67,54);background-color:rgb(224, 224, 224)"
+    ng-show="state.error">
+    <div><strong class="status">ERROR</strong>: {{state.error || 'Unknown error!'}}</div>
+</div>
+
+<md-content ng-show="state.loaded && !state.error">
     <md-list>
-        <md-list-item class="md-3-line">
+        <md-list-item class="md-3-line" ng-repeat="task in tasks" ng-click="noop()">
             <div class="md-list-item-text">
-                <h3>First line</h3>
-                <p>Secondary line text Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam massa quam.</p>
+                <h3>{{ task.name || task.taskDefinitionKey || task.id || 'Unknown task name'}}</h3>
+                <h4>{{ task.processDefinition[0].name || 'Unknown task type Unknown task type Unknown task type Unknown task type' }}</h4>
+                <p></p>
             </div>
-            <md-icon class="md-secondary" ng-click="doSecondaryAction($event)" aria-label="Chat" md-svg-icon="core:menu"></md-icon>
+            <div class="md-list-item-text">
+                <p>{{ task.creationDate || '2015-05-15T14:37:08.880Z' }}</p>
+                <p>{{ task.followupDate || '2015-05-15T14:37:08.880Z'  }}</p>
+                <p>{{ task.dueDate || '2015-05-15T14:37:08.880Z'  }}</p>
+            </div>
+            <div class="md-list-item-text">
+                <p>{{task.priority || '5'}}</p>
+                <p>{{task.performer || 'Unknown performer' }}</p>
+            </div>
         </md-list-item>
     </md-list>
 </md-content>

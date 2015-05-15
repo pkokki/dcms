@@ -4,6 +4,7 @@ angular.module('workspace', [
 		'ngMessages',
 		'atlas',
 		'titan',
+		'directives',
     ])
     .config(['$stateProvider', '$urlRouterProvider', '$mdIconProvider', function ($stateProvider, $urlRouterProvider, $mdIconProvider) {
 
@@ -62,6 +63,21 @@ angular.module('workspace', [
           $state.go('inbox');
     }])
     .controller('inboxController', ['$scope', function($scope) {
+		var state =  {
+			loaded: false,
+			error: null
+		};
+		var load = function() {
+			$scope.state = state;
 
+			$scope.tasks = [
+				{ creationDate: '2015-05-15T14:37:08.880Z' },
+				{ },
+				{ },
+			];
+			state.loaded = true;
+		};
+
+		load();
     }])
     ;

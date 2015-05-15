@@ -4,6 +4,7 @@
 		'ngMessages',
 		'atlas',
 		'titan',
+		'directives',
 	])
 	.config(['$stateProvider', '$urlRouterProvider', '$mdIconProvider', function ($stateProvider, $urlRouterProvider, $mdIconProvider) {
 
@@ -720,19 +721,7 @@
 	/************************************************************************
 	 **************************** DIRECTIVES ********************************
 	 ************************************************************************/
-	.directive('formatDate', [function(){
-		return {
-			require: 'ngModel',
-			link: function(scope, elem, attr, modelCtrl) {
-				modelCtrl.$formatters.push(function(modelValue){
-					if (modelValue)
-						return new Date(modelValue);
-					else
-						return null;
-				})
-			}
-		}
-	}])
+
 	/************************************************************************
 	 **************************** CONTROLLERS *******************************
 	 ************************************************************************/
