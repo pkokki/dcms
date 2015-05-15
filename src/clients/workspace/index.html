@@ -17,20 +17,40 @@
                 <!-- adapted from http://codepen.io/zavoloklom/pen/dIgco -->
                 <div class="sidebar" layout="column">
                     <div class="sidebar-header header-cover" style="background-image: url(../assets/img/bg.jpg);">
+						<div class="top-bar"></div>
                         <!-- Sidebar brand image -->
                         <div class="sidebar-image">
                             <img src="../assets/img/atom_profile_01.jpg">
                         </div>
                         <!-- Sidebar brand name -->
-                        <div layout="row" ng-click="toggle()">
-                            <div class="sidebar-brand" flex>
-                                john.doe@gmail.com
-                            </div>
-                            <md-icon md-svg-icon="core:menu"></md-icon>
+                        <div class="sidebar-brand" layout="row" layout-padding layout-align="center center" ng-click="toggleUserMenu()">
+                            <div flex>john.doe@gmail.com</div>
+							<md-icon md-svg-icon="core:expand_{{userMenuVisible ? 'less' : 'more'}}"></md-icon>
                         </div>
                     </div>
                 </div>
 				<md-content layout="column" flex layout-padding>
+					<div ng-show="userMenuVisible">
+						<md-list>
+	                        <md-list-item ng-click="navigateTo(setting.extraScreen, $event)">
+	                            <md-icon md-svg-icon="core:person"></md-icon>
+	                            <p>Profile</p>
+	                        </md-list-item>
+	                        <md-list-item ng-click="navigateTo(setting.extraScreen, $event)">
+	                            <md-icon md-svg-icon="core:settings"></md-icon>
+	                            <p>Settings</p>
+	                        </md-list-item>
+							<md-list-item ng-click="navigateTo(setting.extraScreen, $event)">
+	                            <md-icon md-svg-icon="core:help"></md-icon>
+	                            <p>Help</p>
+	                        </md-list-item>
+							<md-list-item ng-click="navigateTo(setting.extraScreen, $event)">
+	                            <md-icon md-svg-icon="core:exit_to_app"></md-icon>
+	                            <p>Exit</p>
+	                        </md-list-item>
+	                    </md-list>
+						<md-divider></md-divider>
+					</div>
 					<md-list>
                         <md-list-item ng-click="navigateTo(setting.extraScreen, $event)">
                             <md-icon md-svg-icon="core:menu"></md-icon>
@@ -46,16 +66,15 @@
 			</md-sidenav>
 			<div layout="column" flex>
 				<md-toolbar class="md-toolbar-tools">
-					<md-button class="md-icon-button" aria-label="sidebar" title="sidebar" ng-click="toggleMenu('left')">
+					<md-button class="md-icon-button" aria-label="sidebar" title="sidebar" ng-click="toggleSidenav('left')">
 						<md-icon md-svg-icon="core:menu"></md-icon>
 					</md-button>
 					<h2 flex>dcms :: workspace</h2>
-					<md-button class="md-icon-button" aria-label="home" title="home" ng-click="goHome()">
-						<md-icon md-svg-icon="core:home"></md-icon>
+					<md-button class="md-icon-button" aria-label="search" title="search" ng-click="search()">
+						<md-icon md-svg-icon="core:search"></md-icon>
 					</md-button>
-					<md-button class="md-icon-button" ng-show="hasUser()"
-						aria-label="user profile" title="user profile" ng-click="goUserProfile()">
-						<md-icon md-svg-icon="core:person"></md-icon>
+                    <md-button class="md-icon-button" aria-label="more" title="more" ng-click="openMenu()">
+						<md-icon md-svg-icon="core:more_vert"></md-icon>
 					</md-button>
 				</md-toolbar>
 				<md-content flex>

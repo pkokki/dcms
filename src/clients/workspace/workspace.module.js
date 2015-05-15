@@ -50,8 +50,11 @@ angular.module('workspace', [
         $scope.goUserProfile = function() {
         	$state.go('userProfile');
         };
-        $scope.toggleMenu = function(id) {
+        $scope.toggleSidenav = function(id) {
         	$mdSidenav(id).toggle();
+        };
+		$scope.toggleUserMenu = function() {
+        	$scope.userMenuVisible = !$scope.userMenuVisible;
         };
         console.info('Workspace started');
     }])
