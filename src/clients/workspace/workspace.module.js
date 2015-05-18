@@ -5,6 +5,7 @@ angular.module('workspace', [
 		'atlas',
 		'titan',
 		'directives',
+		'dcmsData',
     ])
     .config(['$stateProvider', '$urlRouterProvider', '$mdIconProvider', function ($stateProvider, $urlRouterProvider, $mdIconProvider) {
 
@@ -22,6 +23,11 @@ angular.module('workspace', [
 				url: '/inbox',
 				templateUrl: 'inbox.html',
 				controller: 'inboxController',
+			})
+			.state('taskViewer', {
+				url: '/tasks/:id',
+				templateUrl: 'taskViewer.html',
+				controller: 'taskViewerController',
 			})
             ;
     }])
@@ -62,7 +68,7 @@ angular.module('workspace', [
   	.controller('homeController', ['$state', function($state) {
           $state.go('inbox');
     }])
-    .controller('inboxController', ['$scope', function($scope) {
+    .controller('inboxController', ['$scope', '$state', function($scope, $state) {
 		var state =  {
 			loaded: false,
 			error: null
@@ -71,13 +77,24 @@ angular.module('workspace', [
 			$scope.state = state;
 
 			$scope.tasks = [
-				{ creationDate: '2015-05-15T14:37:08.880Z' },
-				{ },
-				{ },
+				{ id: 1, creationDate: '2015-05-15T14:37:08.880Z' },
+				{ id: 2, },
+				{ id: 3, },
 			];
+
+			$scope.viewTask = function(index) {
+				var task = $scope.tasks[index];
+				$state.go('taskViewer', { id: task.id });
+			};
+
 			state.loaded = true;
 		};
-
 		load();
     }])
+	.controller('taskViewerController', ['$scope', '$stateParams', 'dcmsData', function($scope, $stateParams, dcmsData) {
+		var id = $stateParams.id;
+		dcmsData.getEntity('tasks', id).then(function(task) {
+			//$scope.formData = entity;
+		});
+	}])
     ;

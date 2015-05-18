@@ -12,20 +12,20 @@
 
 <md-content ng-show="state.loaded && !state.error">
     <md-list>
-        <md-list-item class="md-3-line" ng-repeat="task in tasks" ng-click="noop()">
+        <md-list-item class="md-3-line" ng-repeat="task in tasks" ng-click="viewTask($index)">
             <div class="md-list-item-text">
-                <h3>{{ task.name || task.taskDefinitionKey || task.id || 'Unknown task name'}}</h3>
-                <h4>{{ task.processDefinition[0].name || 'Unknown task type Unknown task type Unknown task type Unknown task type' }}</h4>
+                <h3>{{ task.name || task.taskDefinitionKey || task.id || 'unknown task name'}}</h3>
+                <h4>{{ task.processDefinition[0].name || 'unknown task type' }}</h4>
                 <p></p>
             </div>
             <div class="md-list-item-text">
-                <p>{{ task.creationDate || '2015-05-15T14:37:08.880Z' }}</p>
-                <p>{{ task.followupDate || '2015-05-15T14:37:08.880Z'  }}</p>
-                <p>{{ task.dueDate || '2015-05-15T14:37:08.880Z'  }}</p>
+                <p>{{ task.creationDate || 'creation date' }}</p>
+                <p>{{ task.followupDate || 'followup date'  }}</p>
+                <p>{{ task.dueDate || 'due date'  }}</p>
             </div>
             <div class="md-list-item-text">
-                <p>{{task.priority || '5'}}</p>
-                <p>{{task.performer || 'Unknown performer' }}</p>
+                <p>{{task.priority || 'unknown priority'}}</p>
+                <p>{{task.performer || 'unknown performer' }}</p>
             </div>
         </md-list-item>
     </md-list>
