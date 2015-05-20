@@ -302,7 +302,7 @@ angular.module('dcmsData', [
             },
             ],
             tasks: [
-                { id: 1, customer: { summaryId: 1, profileId: 1, historyId: 1, transactionListId: 1 }}
+                { id: 1, customer: { summaryId: 1, profileId: 1, historyId: 1, transactionListId: 1, strategyListId: 1, }}
             ],
             taskComments: [{
                 id: 1,
@@ -340,6 +340,13 @@ angular.module('dcmsData', [
                     { id: 41234, originalAmount: 100, remainingAmount: 100, daysLate: 180, dueDate: '2014-10-30T21:00:00.000Z', type: 'invoice', disputeAmount: 100, disputeDate: '2015-04-29T21:00:00.000Z', promised: null, status: 'delinquent' },
                 ] },
                 { id: 2, items: [] },
+            ],
+            customerStrategies: [
+                { id: 1, items: [
+                    { id: 1, name: 'default customer strategy', status: 'open', score: '30' },
+                    { id: 1, name: 'mid range customer strategy', status: 'cancelled', score: '0' },
+                    { id: 2, name: 'low rank strategy for delinquencies', status: 'closed', score: '40' },
+                ]},
             ],
         };
         var traverseForArray = function(target, name) {
