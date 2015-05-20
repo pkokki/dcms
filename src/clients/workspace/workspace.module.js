@@ -203,6 +203,12 @@ angular.module('workspace', [
 				});
 			});
 		}
+		$scope.viewDetails = viewDetails;
+
+		// -------------------------------
+		function viewDetails(item) {
+			window.alert('viewDetails: Not Implemented!');
+		}
 	}])
 	.controller('taskTransactionsController', ['$scope', '$state', 'dcmsData', function($scope, $state, dcmsData) {
 		var taskId = null;
