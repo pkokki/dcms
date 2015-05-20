@@ -1,0 +1,27 @@
+<div layout="column" layout-align="center center" layout-padding layout-margin
+    ng-show="!state.loaded && !state.error">
+    <md-progress-circular md-mode="indeterminate"></md-progress-circular>
+    <p>please wait...</p>
+</div>
+
+<div layout="column" layout-align="center center" layout-padding
+    style="color: rgb(244,67,54);background-color:rgb(224, 224, 224)"
+    ng-show="state.error">
+    <div><strong class="status">ERROR</strong>: {{state.error || 'Unknown error!'}}</div>
+</div>
+
+
+<md-content ng-show="state.loaded && !state.error">
+    <md-tabs md-selected="selectedTabIndex">
+        <md-tab label="Home" md-on-select="go('home')"></md-tab>
+        <md-tab label="Profile" md-on-select="go('profile')"></md-tab>
+        <md-tab label="History" md-on-select="go('history')"></md-tab>
+        <md-tab label="Accounts" md-on-select="go('accounts')"></md-tab>
+        <md-tab label="Transactions" md-on-select="go('transactions')"></md-tab>
+        <md-tab label="Aging" md-on-select="go('aging')"></md-tab>
+        <md-tab label="Notes" md-on-select="go('notes')"></md-tab>
+        <md-tab label="Tasks" md-on-select="go('tasks')"></md-tab>
+    </md-tabs>
+
+    <div ui-view></div>
+</md-content>

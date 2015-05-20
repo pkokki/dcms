@@ -1,0 +1,41 @@
+<div layout-gt-sm="row" layout-sm="column" layout-padding>
+    <div flex>
+        <mda-view-part label="Credit Limit" value="data.profile.creditLimit"></mda-view-part>
+        <mda-view-part label="Credit Hold" value="data.profile.creditHold"></mda-view-part>
+        <mda-view-part label="Credit Rating" value="data.profile.creditRating"></mda-view-part>
+        <mda-view-part label="Collector Name" value="data.profile.collectorName"></mda-view-part>
+        <mda-view-part label="Include in Dunning" value="data.profile.includeInDunning"></mda-view-part>
+    </div>
+    <div flex>
+        <div>Past Year</div>
+        <div layout>
+            <div flex>
+                <div>Installments</div>
+                <mda-view-part label="Due" value="data.profile.pastYearInstallments.due"></mda-view-part>
+                <mda-view-part label="On time" value="data.profile.pastYearInstallments.onTime"></mda-view-part>
+                <mda-view-part label="Unpaid" value="data.profile.pastYearInstallments.unpaid"></mda-view-part>
+                <mda-view-part label="Late" value="data.profile.pastYearInstallments.late"></mda-view-part>
+            </div>
+            <div flex>
+                <div>Promises</div>
+                <mda-view-part label="Total" value="data.profile.pastYearPromises.total"></mda-view-part>
+                <mda-view-part label="Broken" value="data.profile.pastYearPromises.broken"></mda-view-part>
+                <mda-view-part label="Open" value="data.profile.pastYearPromises.open"></mda-view-part>
+            </div>
+        </div>
+    </div>
+    <div flex>
+        <div>Last interaction</div>
+        <mda-view-part label="Type" value="data.profile.lastInteraction.type"></mda-view-part>
+        <mda-view-part label="Date" value="data.profile.lastInteraction.date"></mda-view-part>
+        <mda-view-part label="Performer" value="data.profile.lastInteraction.performer"></mda-view-part>
+        <mda-view-part label="Result" value="data.profile.lastInteraction.result"></mda-view-part>
+    </div>
+</div>
+<div>Metrics</div>
+<mda-view-part label="As of" value="data.profile.metrics.asOf"></mda-view-part>
+<div layout>
+    <div flex></div>
+    <div flex="20"></div>
+    <div flex="20"></div>
+</div>

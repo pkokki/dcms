@@ -1,0 +1,88 @@
+<div layout="row" layout-align="center center">
+    <h3>Payment processing</h3>
+    <span flex></span>
+    <md-button ng-click="cancel()">cancel</md-button>
+    <md-button ng-click="submit();">submit</md-button>
+</div>
+
+<div class="table-responsive-vertical">
+    <table id="table" class="table table-hover">
+        <thead>
+            <tr>
+                <th>Transaction</th>
+                <th title="Current|Delinquent|Paid">Status</th>
+                <th>Due Date</th>
+                <th>Original Amount</th>
+                <th>Remaining Amount</th>
+                <th>Payment Amount</th>
+                <th><md-checkbox ng-checked="false" ng-click="toggle()" aria-label="pay all"></md-icon></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="transaction in pendingTransactions">
+                <td data-title="Transaction">{{transaction.id}}</td>
+                <td data-title="Status">{{transaction.status}}</td>
+                <td data-title="Due Date">{{transaction.dueDate | date: 'shortDate' }}</td>
+                <td data-title="Original Amount" style="text-align:right">{{transaction.originalAmount | number: 2}} {{transaction.originalAmountCurrency}}</td>
+                <td data-title="Remaining Amount" style="text-align:right">{{transaction.remainingAmount | number: 2}} {{transaction.remainingAmountCurrency}}</td>
+                <td data-title="Payment Amount">
+                    <input type="text" step="any" ng-disabled="!transaction.payment" ng-model="transaction.payment.amount" />
+                </td>
+                <td><md-checkbox ng-checked="transaction.payment" ng-click="toggle(transaction)" aria-label="pay"></td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th style="text-align:right">{{ sums.original | number: 2}}</th>
+                <th style="text-align:right">{{ sums.remaining | number: 2}}</th>
+                <th style="text-align:right">{{ sums.payment | number: 2}}</th>
+                <th></th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<div>
+    <md-subheader>Credit Card</md-subheader>
+    Enter the information for the payment. To add a new credit card or modify
+    card information, click the ellipse and enter the information in Payment Details.
+    If the IEX: Send Correspondence Automatically profile option is set to Yes, then a
+    confirmation document is sent to the customer's dunning address using the
+    correspondence method and template specified in the Collections Checklist.
+</div>
+<div>
+    <md-subheader>Bank Transfer</md-subheader>
+    Enter the information for the payment. To add a new account number, click
+    the ellipse and add the information in Payment Details.
+    If the IEX: Send Correspondence Automatically profile option is set to Yes, then a
+    confirmation document is sent to the customer's dunning address using the
+    correspondence method and template specified in the Collections Checklist.
+</div>
+<div>
+    <md-subheader>Promise</md-subheader>
+    <form>
+        <md-input-container>
+			<label>Promise amount*</label>
+			<input type="number" ng-model="promise.amount"></input>
+		</md-input-container>
+        <md-input-container>
+			<label>Promise date*</label>
+			<input type="date" ng-model="promise.date"></input>
+		</md-input-container>
+        <md-input-container>
+			<label>Planned payment method</label>
+			<input ng-model="promise.plannedPaymentMethod"></input>
+		</md-input-container>
+    </form>
+
+</div>
+<div>
+    <md-subheader>Mass promise</md-subheader>
+</div>
+<md-input-container flex>
+    <label>Comments</label>
+    <textarea ng-model="transaction.payment.comments" columns="1" rows="1" md-maxlength="150"></textarea>
+</md-input-container>

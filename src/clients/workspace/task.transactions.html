@@ -1,0 +1,59 @@
+<form>
+    <div layout layout-align="start center" layout-padding>
+        <md-input-container>
+            <label>Type</label>
+            <input ng-model="transactionsFilter.type" />
+        </md-input-container>
+        <md-input-container>
+            <label>Due date from</label>
+            <input type="date" ng-model="transactionsFilter.fromDate" />
+        </md-input-container>
+        <md-input-container>
+            <label>Due date to</label>
+            <input type="date" ng-model="transactionsFilter.toDate" />
+        </md-input-container>
+        <md-checkbox ng-model="transactionsFilter.includeCurrent" aria-label="Include current">
+            Include current
+        </md-checkbox>
+        <md-checkbox ng-model="transactionsFilter.includeClosed" aria-label="Include closed">
+            Include closed
+        </md-checkbox>
+        <md-button ng-click="filterTransactions()">Filter</md-button>
+    </div>
+</form>
+<div class="table-responsive-vertical">
+    <table id="table" class="table table-hover">
+        <thead>
+            <tr>
+                <th>Transaction</th>
+                <th>Original Amount</th>
+                <th>Remaining Amount</th>
+                <th>Days Late</th>
+                <th>Due Date</th>
+                <th title="Invoice|CreditMemo|DebitMemo|Chargeback|Deposit|Guarantee|BillsReceivable">Type</th>
+                <th>Dispute Amount</th>
+                <th>Dispute Date</th>
+                <th>Promised?</th>
+                <th title="Current|Delinquent|Paid">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="transaction in data.transactions" ng-click="viewDetails(transaction.id)">
+                <td data-title="Transaction">{{transaction.id}}</td>
+                <td data-title="Original Amount" style="text-align:right">{{transaction.originalAmount | number: 2}} {{transaction.originalAmountCurrency}}</td>
+                <td data-title="Remaining Amount" style="text-align:right">{{transaction.remainingAmount | number: 2}} {{transaction.remainingAmountCurrency}}</td>
+                <td data-title="Days Late" style="text-align:right">{{transaction.daysLate}}</td>
+                <td data-title="Due Date">{{transaction.dueDate | date: 'shortDate' }}</td>
+                <td data-title="Type">{{transaction.type}}</td>
+                <td data-title="Dispute Amount" style="text-align:right">{{transaction.disputeAmount | number: 2}} {{transaction.disputeAmountCurrency}}</td>
+                <td data-title="Dispute Date">{{transaction.disputeDate | date: 'shortDate' }}</td>
+                <td data-title="Promised?">{{transaction.promised}}</td>
+                <td data-title="Status">{{transaction.status}}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div layout>
+    <md-button ng-click="processPayment()">Process payment</md-button>
+    <md-button ng-click="processAdjustment()">Process adjustment</md-button>
+</div>

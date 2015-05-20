@@ -1,0 +1,36 @@
+<div layout-gt-sm="row" layout-sm="column" layout-padding>
+    <div flex>
+        <div style="color: #fff; background: rgba(0, 0, 0, 0.30); padding: 5px 2px;">Customer information</div>
+        <div layout>
+            <mda-view-part flex label="Firstname" value="data.summary.demographics.firstname"></mda-view-part>
+            <mda-view-part label="Middle" value="data.summary.demographics.middlename"></mda-view-part>
+        </div>
+        <mda-view-part label="Lastname" value="data.summary.demographics.lastname"></mda-view-part>
+        <mda-view-part label="Title" value="data.summary.demographics.title"></mda-view-part>
+        <mda-view-part label="Organization" value="data.summary.demographics.organization"></mda-view-part>
+        <mda-view-part label="Address" value="data.summary.demographics.address"></mda-view-part>
+        <mda-view-part label="Email" value="data.summary.demographics.email"></mda-view-part>
+        <mda-view-part label="Phone" value="data.summary.demographics.phone"></mda-view-part>
+    </div>
+    <div flex>
+        <div style="color: #fff; background: rgba(0, 0, 0, 0.30); padding: 5px 2px;">Customer statistics</div>
+        <mda-view-part label="Status" value="data.summary.collections.status"></mda-view-part>
+        <mda-view-part label="Identification number" value="data.summary.collections.id"></mda-view-part>
+        <mda-view-part label="Score" value="data.summary.collections.score"></mda-view-part>
+        <mda-view-part label="Transactions" value="data.summary.collections.transactionCount"></mda-view-part>
+        <mda-view-part label="Delinquencies in past year" value="data.summary.collections.pastDelinquencies"></mda-view-part>
+    </div>
+    <div flex>
+        <div style="color: #fff; background: rgba(0, 0, 0, 0.30); padding: 5px 2px;">Operational data</div>
+        <mda-view-part label="Operating unit" value="data.summary.operations.unit"></mda-view-part>
+        <mda-view-part label="View level" value="data.summary.operations.level"></mda-view-part>
+        <div layout>
+            <mda-view-part flex label="Amount ovedue" value="data.summary.operations.amountOverdue"></mda-view-part>
+            <mda-view-part flex label="Net balance" value="data.summary.operations.netBalance"></mda-view-part>
+        </div>
+        <mda-view-part label="Days Sales Outstanding" value="data.summary.operations.dso"></mda-view-part>
+        <mda-view-part label="Last payment paid on" value="data.summary.operations.lastPaymentPaidOn"></mda-view-part>
+        <mda-view-part label="Last payment due on" value="data.summary.operations.lastPaymentDueOn"></mda-view-part>
+        <mda-view-part label="Last payment amount" value="data.summary.operations.lastPaymentAmount"></mda-view-part>
+    </div>
+</div>

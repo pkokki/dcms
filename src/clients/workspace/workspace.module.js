@@ -11,7 +11,9 @@ angular.module('workspace', [
 
         $mdIconProvider.iconSet('core', '../assets/img/core-icons.svg', 24);
 
-		$urlRouterProvider.otherwise('/');
+		$urlRouterProvider
+			.when('/tasks/{id}', '/tasks/{id}/home')
+			.otherwise('/');
 
         $stateProvider
 			.state('home', {
@@ -24,13 +26,70 @@ angular.module('workspace', [
 				templateUrl: 'inbox.html',
 				controller: 'inboxController',
 			})
-			.state('taskViewer', {
+			.state('task', {
 				url: '/tasks/:id',
-				templateUrl: 'taskViewer.html',
-				controller: 'taskViewerController',
+				templateUrl: 'task.main.html',
+				controller: 'taskMainController',
+				redirectTo: 'task.home',
+			})
+			.state('task.home', {
+				url: '/home',
+				templateUrl: 'task.home.html',
+				controller: 'taskHomeController',
+			})
+			.state('task.profile', {
+				url: '/profile',
+				templateUrl: 'task.profile.html',
+				controller: 'taskProfileController',
+			})
+			.state('task.history', {
+				url: '/history',
+				templateUrl: 'task.history.html',
+				controller: 'taskHistoryController',
+			})
+			.state('task.accounts', {
+				url: '/accounts',
+				templateUrl: 'task.accounts.html',
+			})
+			.state('task.transactions', {
+				url: '/transactions',
+				templateUrl: 'task.transactions.html',
+				controller: 'taskTransactionsController',
+			})
+			.state('task.aging', {
+				url: '/aging',
+				templateUrl: 'task.aging.html',
+			})
+			.state('task.notes', {
+				url: '/notes',
+				templateUrl: 'task.notes.html',
+				controller: 'taskNotesController',
+			})
+			.state('task.tasks', {
+				url: '/tasks',
+				templateUrl: 'task.tasks.html',
+			})
+			.state('task.payment', {
+				url: '/payment',
+				templateUrl: 'task.payment.html',
+				controller: 'taskPaymentController',
 			})
             ;
     }])
+	.run(['$rootScope', '$state', function ($rootScope, $state) {
+		$rootScope.$on("$stateChangeStart", function(event, toState, toParams, fromState, fromParams) {
+			/* Hack: https://github.com/angular-ui/ui-router/issues/1584 */
+			if (toState.redirectTo) {
+				event.preventDefault();
+		        $state.go(toState.redirectTo, toParams)
+      		}
+			//if (!spa.isSignedOn() && toState.name != 'signin' && !toState.allowAnonymous) {
+			//	spa.suspendRoute(toState, toParams);
+			//	$state.go('signin');
+			//	event.preventDefault();
+			//}
+		});
+	}])
 
     /************************************************************************
 	 ****************************** SERVICES ********************************
@@ -84,17 +143,163 @@ angular.module('workspace', [
 
 			$scope.viewTask = function(index) {
 				var task = $scope.tasks[index];
-				$state.go('taskViewer', { id: task.id });
+				$state.go('task', { id: task.id });
 			};
 
 			state.loaded = true;
 		};
 		load();
     }])
-	.controller('taskViewerController', ['$scope', '$stateParams', 'dcmsData', function($scope, $stateParams, dcmsData) {
-		var id = $stateParams.id;
-		dcmsData.getEntity('tasks', id).then(function(task) {
-			//$scope.formData = entity;
+	.controller('taskMainController', ['$scope', '$q', '$state', '$stateParams', 'dcmsData', function($scope, $q, $state, $stateParams, dcmsData) {
+		var state =  {
+			loaded: false,
+			error: null,
+			currentTaskId: $stateParams.id,
+		};
+		$scope.state = state;
+		$scope.data = {};
+		$scope.go = function(tabName) {
+			$state.go('task.' + tabName, { id: state.currentTaskId });
+		};
+		var tabStates = { 'task.home': 0,  'task.profile': 1,  'task.history': 2,  'task.accounts': 3,  'task.transactions': 4,  'task.aging': 5,  'task.notes': 6,  'task.tasks': 7, 'task.payment': 4 };
+		$scope.selectedTabIndex = tabStates[$state.current.name];
+		$scope.getTask = function() {
+			if (state.currentTask) {
+				state.loaded = true;
+				return $q(function(resolve, reject) { resolve(state.currentTask); });
+			}
+			else {
+				return dcmsData.getEntity('tasks', state.currentTaskId).then(function(task) {
+					state.loaded = true;
+					state.currentTask = task;
+					return task;
+				});
+			}
+		};
+	}])
+	.controller('taskHomeController', ['$scope', 'dcmsData', function($scope, dcmsData) {
+		if (!$scope.data.summary) {
+			$scope.getTask().then(function(task) {
+				dcmsData.getEntity('customerSummaries', task.customer.summaryId).then(function(summary){
+					$scope.data.summary = summary;
+				});
+			});
+		}
+	}])
+	.controller('taskProfileController', ['$scope', 'dcmsData', function($scope, dcmsData) {
+		if (!$scope.data.profile) {
+			$scope.getTask().then(function(task) {
+				dcmsData.getEntity('customerProfiles', task.customer.profileId).then(function(profile){
+					$scope.data.profile = profile;
+				});
+			});
+		}
+	}])
+	.controller('taskHistoryController', ['$scope', 'dcmsData', function($scope, dcmsData) {
+		if (!$scope.data.history) {
+			$scope.getTask().then(function(task) {
+				dcmsData.getEntity('customerHistory', task.customer.historyId).then(function(history){
+					$scope.data.history = history;
+				});
+			});
+		}
+	}])
+	.controller('taskTransactionsController', ['$scope', '$state', 'dcmsData', function($scope, $state, dcmsData) {
+		var taskId = null;
+		$scope.getTask().then(function(task) {
+			taskId = task.id;
+			if (!$scope.data.transactions) {
+				dcmsData.getEntity('customerTransactions', task.customer.transactionListId).then(function(list){
+					$scope.data.transactions = list.items;
+				});
+			}
 		});
+
+		$scope.filterTransactions = function() {
+			window.alert('filterTransactions: Not implemented!');
+		};
+		$scope.viewDetails = function(id) {
+			window.alert('viewDetails: Not implemented!');
+		};
+		$scope.processPayment = function() {
+			$state.go('task.payment', { id: taskId })
+		};
+		$scope.processAdjustment = function() {
+			window.alert('processAdjustment: Not implemented!');
+		};
+	}])
+	.controller('taskPaymentController', ['$scope', '$state', 'dcmsData', function($scope, $state, dcmsData) {
+		var initialize = function(items) {
+			var pendingTransactions = [];
+			var sums = {
+				original: 0,
+				remaining: 0,
+				payment: 0
+			};
+			for (var i=0; i<items.length; i++)
+				if (items[i].status == 'delinquent') {
+					var pendingTransaction = items[i];
+					pendingTransaction.payment = null;
+					sums.original += pendingTransaction.originalAmount;
+					sums.remaining += pendingTransaction.remainingAmount;
+					pendingTransactions.push(pendingTransaction);
+				}
+			$scope.pendingTransactions = pendingTransactions;
+			$scope.sums = sums;
+			$scope.cancel = function() {
+				$state.go('task.transactions', { id: $scope.state.currentTaskId });
+			};
+			$scope.submit = function() {
+				window.alert('submit: Not implemented!');
+			};
+			$scope.toggle = function(item) {
+				if (item) {
+					toggleItem(item);
+				}
+				else {
+					var list = $scope.pendingTransactions;
+					for (var i = 0; i < list.length; i++) {
+						toggleItem(list[i]);
+					}
+				}
+			}
+		}
+
+		var toggleItem = function(item) {
+			if (item.payment) {
+				$scope.sums.payment -= item.payment.amount;
+				item.payment = null;
+			}
+			else {
+				item.payment = {
+					amount: item.remainingAmount
+				};
+				$scope.sums.payment += item.payment.amount;
+			}
+		};
+
+		if ($scope.data.transactions) {
+			initialize($scope.data.transactions);
+		}
+		else {
+			$scope.getTask().then(function(task) {
+				dcmsData.getEntity('customerTransactions', task.customer.transactionListId).then(function(list){
+					initialize(list.items);
+				});
+			});
+		}
+	}])
+	.controller('taskNotesController', ['$scope', '$state', 'dcmsData', function($scope, $state, dcmsData) {
+		$scope.getTask().then(function(task) {
+			if (!$scope.data.comments) {
+				dcmsData.getEntity('taskComments', task.id).then(function(list){
+					$scope.data.comments = list.items;
+				});
+			}
+		});
+
+		$scope.submitComment = function(content) {
+			window.alert('submitComment: Not implemented!');
+		};
 	}])
     ;

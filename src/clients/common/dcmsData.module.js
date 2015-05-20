@@ -301,7 +301,46 @@ angular.module('dcmsData', [
                 strategy: { id: 1, name: 'default strategy' }
             },
             ],
-            tasks: [],
+            tasks: [
+                { id: 1, customer: { summaryId: 1, profileId: 1, historyId: 1, transactionListId: 1 }}
+            ],
+            taskComments: [{
+                id: 1,
+                items: [
+                    { id: 1, date: '2015-02-11T21:00:00.000Z', author: 'pkokki', type: 'PaymentProcessing', content: 'This is the content of this note.' },
+                    { id: 2, date: '2015-03-11T21:00:00.000Z', author: 'johndoe', type: 'PromiseToPay', content: 'This is the content of this note.' },
+                ]}
+            ],
+            customerSummaries: [
+                {
+                    id: 1,
+                    demographics: {
+                        firstname: 'Panos',
+                        middlename: 'Av',
+                        lastname: 'Kokkinidis',
+                    },
+                    collections: { status: 'Delinquent', id: '1234567890', score: 87.65, transactionCount: 10, pastDelinquencies: 4 }, }
+            ],
+            customerProfiles: [
+                { id: 1, creditLimit: 10000, }
+            ],
+            customerHistory: [{
+                id: 1,
+                activities: [
+                    { id: 1, type: 'Interaction', date: '2015-04-25T21:00:00.000Z', transaction: null, notes: 'Customer not found' },
+                    { id: 2, type: 'Payment', date: '2015-04-28T21:00:00.000Z', transaction: { id: 1162, status: 'applied', amount: 330.89, currency: 'EUR' } },
+                    { id: 3, type: 'Payment', date: '2015-05-12T21:00:00.000Z', transaction: { id: 1187, status: 'applied', amount: 230.00, currency: 'EUR' } },
+                ]}
+            ],
+            customerTransactions: [
+                { id: 1, items: [
+                    { id: 11234, originalAmount: 120, remainingAmount: 0, daysLate: null, dueDate: '2015-04-29T21:00:00.000Z', type: 'invoice', disputeAmount: null, disputeDate: null, promised: null, status: 'paid' },
+                    { id: 21234, originalAmount: 120, remainingAmount: 120, daysLate: null, dueDate: '2015-05-30T21:00:00.000Z', type: 'invoice', disputeAmount: null, disputeDate: null, promised: null, status: 'current' },
+                    { id: 31234, originalAmount: 300, remainingAmount: 100, daysLate: 149, dueDate: '2014-11-29T21:00:00.000Z', type: 'invoice', disputeAmount: null, disputeDate: null, promised: true, status: 'delinquent' },
+                    { id: 41234, originalAmount: 100, remainingAmount: 100, daysLate: 180, dueDate: '2014-10-30T21:00:00.000Z', type: 'invoice', disputeAmount: 100, disputeDate: '2015-04-29T21:00:00.000Z', promised: null, status: 'delinquent' },
+                ] },
+                { id: 2, items: [] },
+            ],
         };
         var traverseForArray = function(target, name) {
             var obj = target[name];

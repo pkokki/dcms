@@ -1,0 +1,17 @@
+<md-list>
+    <md-list-item class="md-2-line" ng-repeat="item in data.comments">
+        <div class="md-list-item-text">
+            <h4>{{ item.author }} @ {{ item.date }}</h4>
+            <p>{{ item.content }} [{{ item.type }}]</p>
+        </div>
+    </md-list-item>
+</md-list>
+<div layout layout-align="start center">
+    <md-input-container flex>
+        <label>New comment</label>
+        <textarea ng-model="newComment" md-maxlength="150"></textarea>
+    </md-input-container>
+    <md-button aria-label="submit comment" ng-click="submitComment(newComment)">
+        <md-icon md-svg-icon="core:send"></md-icon>
+    </md-button>
+</div>
