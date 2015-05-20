@@ -292,14 +292,20 @@ angular.module('workspace', [
 	.controller('taskNotesController', ['$scope', '$state', 'dcmsData', function($scope, $state, dcmsData) {
 		$scope.getTask().then(function(task) {
 			if (!$scope.data.comments) {
-				dcmsData.getEntity('taskComments', task.id).then(function(list){
-					$scope.data.comments = list.items;
+				dcmsData.getEntity('taskComments', task.id).then(function(comments) {
+					$scope.data.comments = comments;
 				});
 			}
 		});
 
 		$scope.submitComment = function(content) {
-			window.alert('submitComment: Not implemented!');
+			if (content) {
+				var comment = { date: new Date(), author: 'loggedinUser', content: content };
+				$scope.data.comments.items.push(comment);
+				dcmsData.updateEntity('taskComments', $scope.data.comments).then(function(comments){
+					$scope.data.comments = comments;
+				});
+			}
 		};
 	}])
     ;

@@ -1,17 +1,20 @@
 <md-list>
-    <md-list-item class="md-2-line" ng-repeat="item in data.comments">
+    <md-list-item class="md-2-line" ng-repeat="item in data.comments.items">
         <div class="md-list-item-text">
-            <h4>{{ item.author }} @ {{ item.date }}</h4>
+            <h4>{{ item.author }} @ {{ item.date | date: 'short' }}</h4>
             <p>{{ item.content }} [{{ item.type }}]</p>
         </div>
     </md-list-item>
 </md-list>
-<div layout layout-align="start center">
-    <md-input-container flex>
-        <label>New comment</label>
-        <textarea ng-model="newComment" md-maxlength="150"></textarea>
-    </md-input-container>
-    <md-button aria-label="submit comment" ng-click="submitComment(newComment)">
-        <md-icon md-svg-icon="core:send"></md-icon>
-    </md-button>
-</div>
+<form name="newCommentForm">
+    <div layout layout-align="start center">
+        <md-input-container flex>
+            <label>New comment</label>
+            <textarea ng-model="newComment" md-maxlength="150"></textarea>
+        </md-input-container>
+        <md-button aria-label="submit comment" ng-disabled="newCommentForm.$invalid"
+            ng-click="submitComment(newComment); newComment = null;">
+            <md-icon md-svg-icon="core:send"></md-icon>
+        </md-button>
+    </div>
+</form>

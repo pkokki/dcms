@@ -307,8 +307,8 @@ angular.module('dcmsData', [
             taskComments: [{
                 id: 1,
                 items: [
-                    { id: 1, date: '2015-02-11T21:00:00.000Z', author: 'pkokki', type: 'PaymentProcessing', content: 'This is the content of this note.' },
-                    { id: 2, date: '2015-03-11T21:00:00.000Z', author: 'johndoe', type: 'PromiseToPay', content: 'This is the content of this note.' },
+                    { date: '2015-02-11T21:00:00.000Z', author: 'pkokki', type: 'PaymentProcessing', content: 'This is the content of this note.' },
+                    { date: '2015-03-11T21:00:00.000Z', author: 'johndoe', type: 'PromiseToPay', content: 'This is the content of this note.' },
                 ]}
             ],
             customerSummaries: [
