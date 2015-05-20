@@ -13,14 +13,14 @@
 
 <md-content ng-show="state.loaded && !state.error">
     <md-tabs md-selected="selectedTabIndex">
-        <md-tab label="Home" md-on-select="go('home')"></md-tab>
-        <md-tab label="Profile" md-on-select="go('profile')"></md-tab>
-        <md-tab label="History" md-on-select="go('history')"></md-tab>
-        <md-tab label="Accounts" md-on-select="go('accounts')"></md-tab>
-        <md-tab label="Transactions" md-on-select="go('transactions')"></md-tab>
-        <md-tab label="Aging" md-on-select="go('aging')"></md-tab>
-        <md-tab label="Notes" md-on-select="go('notes')"></md-tab>
-        <md-tab label="Tasks" md-on-select="go('tasks')"></md-tab>
+        <md-tab label="Home" md-on-select="go('home')" ng-disabled="!state.currentTask.customer.summaryId"></md-tab>
+        <md-tab label="Profile" md-on-select="go('profile')" ng-disabled="!state.currentTask.customer.profileId"></md-tab>
+        <md-tab label="History" md-on-select="go('history')" ng-disabled="!state.currentTask.customer.historyId"></md-tab>
+        <md-tab label="Accounts" md-on-select="go('accounts')" ng-disabled="true"></md-tab>
+        <md-tab label="Transactions" md-on-select="go('transactions')" ng-disabled="!state.currentTask.customer.transactionListId"></md-tab>
+        <md-tab label="Aging" md-on-select="go('aging')" ng-disabled="true"></md-tab>
+        <md-tab label="Notes" md-on-select="go('notes')" ng-disabled="!state.currentTask"></md-tab>
+        <md-tab label="Tasks" md-on-select="go('tasks')" ng-disabled="true"></md-tab>
     </md-tabs>
 
     <div ui-view></div>
