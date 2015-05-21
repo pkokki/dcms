@@ -13,6 +13,17 @@
             <p>Created: {{step.creationDate | date: 'short' }} - Ended: {{ step.endDate | date: 'short' }}</p>
             <p>Assigned to: {{ step.performer.name }} - Status: {{ step.status }}</p>
         </div>
-        <md-icon class="md-secondary" ng-click="viewActions($event)" aria-label="actions" md-svg-icon="core:expand_more"></md-icon>
+        <md-icon class="md-secondary" ng-click="viewActions($event, step)" aria-label="actions" md-svg-icon="core:more_horiz"></md-icon>
     </md-list-item>
 </md-list>
+
+<script type="text/ng-template" id="task.strategy.actions.html">
+<md-dialog aria-label="Available actions">
+  <md-dialog-content>
+    <md-list>
+      <md-list-item ng-click="complete()">Complete</md-list-item>
+      <md-list-item ng-click="closeDialog()">Cancel</md-list-item>
+    </md-list>
+  </md-dialog-content>
+</md-dialog>
+</script>

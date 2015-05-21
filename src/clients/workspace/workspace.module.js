@@ -334,7 +334,7 @@ angular.module('workspace', [
 			});
 		}
 	}])
-	.controller('taskStrategyController', ['$scope', '$state', '$stateParams', 'dcmsData', function($scope, $state, $stateParams, dcmsData) {
+	.controller('taskStrategyController', ['$scope', '$state', '$stateParams', '$mdDialog', 'dcmsData', function($scope, $state, $stateParams, $mdDialog, dcmsData) {
 		$scope.viewDetails = viewDetails;
 		$scope.viewActions = viewActions;
 		$scope.cancel = cancel;
@@ -356,8 +356,21 @@ angular.module('workspace', [
 		function viewDetails(step) {
 			window.alert('viewDetails: Not implemented!');
 		}
-		function viewActions(evt) {
-			window.alert('viewActions: Not implemented!');
+		function viewActions(evt, step) {
+			$mdDialog.show({
+				clickOutsideToClose: true,
+				targetEvent: evt,
+				templateUrl: 'task.strategy.actions.html',
+				controller: function(scope, $mdDialog) {
+					scope.complete = function() {
+						$mdDialog.hide();
+						window.alert('viewActions.complete: Not implemented!');
+					},
+					scope.closeDialog = function() {
+						$mdDialog.hide();
+					}
+				}
+			});
 		}
 		function findStrategy(list, strategyId) {
 			for (var i = 0; i < list.length; i++) {
