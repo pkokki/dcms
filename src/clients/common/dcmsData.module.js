@@ -343,9 +343,14 @@ angular.module('dcmsData', [
             ],
             customerStrategies: [
                 { id: 1, items: [
-                    { id: 1, name: 'default customer strategy', status: 'open', score: '30' },
-                    { id: 1, name: 'mid range customer strategy', status: 'cancelled', score: '0' },
-                    { id: 2, name: 'low rank strategy for delinquencies', status: 'closed', score: '40' },
+                    { id: 1, name: 'default customer strategy', status: 'running', score: '30', steps: [
+                        { id: 1, name: 'phone call', type: 'manual', status: 'pending', creationDate: '2015-05-09T21:00:00.000Z', endDate: null, performer: { id: 1, name: 'pkokki' }},
+                        { id: 2, name: 'send email or fax', type: 'auto', status: 'completed', creationDate: '2015-05-04T06:38:00.000Z', endDate: '2015-05-04T07:15:00.000Z', performer: { id: 0, name: 'SYSTEM' }},
+                    ]},
+                    { id: 2, name: 'mid range customer strategy', status: 'failed', score: '0' },
+                    { id: 3, name: 'mid range customer strategy', status: 'completed', score: '0' },
+                    { id: 4, name: 'low range customer strategy', status: 'completed', score: '40' },
+                    { id: 5, name: 'low rank strategy for delinquencies', status: 'terminated', score: '40' },
                 ]},
             ],
         };

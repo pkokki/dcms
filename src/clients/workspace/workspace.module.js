@@ -61,6 +61,11 @@ angular.module('workspace', [
 				templateUrl: 'task.strategies.html',
 				controller: 'taskStrategiesController',
 			})
+			.state('task.strategy', {
+				url: '/strategies/:strategyId',
+				templateUrl: 'task.strategy.html',
+				controller: 'taskStrategyController',
+			})
 			.state('task.aging', {
 				url: '/aging',
 				templateUrl: 'task.aging.html',
@@ -166,7 +171,17 @@ angular.module('workspace', [
 		$scope.go = function(tabName) {
 			$state.go('task.' + tabName, { id: state.currentTaskId });
 		};
-		var tabStates = { 'task.home': 0,  'task.profile': 1,  'task.history': 2,  'task.accounts': 3,  'task.transactions': 4, 'task.payment': 4,  'task.strategies': 5, 'task.aging': 6,  'task.notes': 7,  'task.tasks': 8 };
+		var tabStates = {
+			'task.home': 0,
+			'task.profile': 1,
+			'task.history': 2,
+			'task.accounts': 3,
+			'task.transactions': 4, 'task.payment': 4,
+			'task.strategies': 5, 'task.strategy': 5,
+			'task.aging': 6,
+			'task.notes': 7,
+			'task.tasks': 8
+		};
 		$scope.selectedTabIndex = tabStates[$state.current.name];
 		$scope.getTask = function() {
 			if (state.currentTask) {
@@ -301,13 +316,61 @@ angular.module('workspace', [
 		}
 	}])
 	.controller('taskStrategiesController', ['$scope', '$state', 'dcmsData', function($scope, $state, dcmsData) {
-		$scope.getTask().then(function(task) {
-			if (!$scope.data.strategies) {
-				dcmsData.getEntity('customerStrategies', task.customer.strategyListId).then(function(list){
-					$scope.data.strategies = list;
-				});
+		$scope.viewStrategy = viewStrategy;
+		initialize();
+
+		function initialize() {
+			$scope.getTask().then(function(task) {
+				if (!$scope.data.strategies) {
+					dcmsData.getEntity('customerStrategies', task.customer.strategyListId).then(function(list){
+						$scope.data.strategies = list;
+					});
+				}
+			});
+		}
+		function viewStrategy(strategy) {
+			$scope.getTask().then(function(task) {
+				$state.go('task.strategy', { id: task.id, strategyId: strategy.id })
+			});
+		}
+	}])
+	.controller('taskStrategyController', ['$scope', '$state', '$stateParams', 'dcmsData', function($scope, $state, $stateParams, dcmsData) {
+		$scope.viewDetails = viewDetails;
+		$scope.viewActions = viewActions;
+		$scope.cancel = cancel;
+		initialize();
+
+		function initialize() {
+			var strategyId = $stateParams.strategyId;
+			$scope.getTask().then(function(task) {
+				if ($scope.data.strategies) {
+					$scope.strategy = findStrategy($scope.data.strategies.items, strategyId);
+				}
+				else {
+					dcmsData.getEntity('customerStrategies', task.customer.strategyListId).then(function(list){
+						$scope.strategy = findStrategy(list.items, strategyId);
+					});
+				}
+			});
+		}
+		function viewDetails(step) {
+			window.alert('viewDetails: Not implemented!');
+		}
+		function viewActions(evt) {
+			window.alert('viewActions: Not implemented!');
+		}
+		function findStrategy(list, strategyId) {
+			for (var i = 0; i < list.length; i++) {
+				if (list[i].id == strategyId)
+					return list[i];
 			}
-		});
+			return null;
+		}
+		function cancel() {
+			$scope.getTask().then(function(task) {
+				$state.go('task.strategies', { id: task.id })
+			});
+		}
 	}])
 	.controller('taskNotesController', ['$scope', '$state', 'dcmsData', function($scope, $state, dcmsData) {
 		$scope.getTask().then(function(task) {

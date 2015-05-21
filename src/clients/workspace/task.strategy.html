@@ -1,0 +1,18 @@
+<div layout="row" layout-align="center center">
+    <h2>{{strategy.name || 'New strategy' }}</h2>
+    <span flex></span>
+    <md-button ng-click="cancel()">cancel</md-button>
+</div>
+
+{{strategy || 'NULL'}}
+<md-list>
+    <md-list-item class="md-3-line" ng-repeat="step in strategy.steps" ng-click="viewDetails(step)">
+        <md-icon class="md-avatar" md-svg-icon="core:status-{{step.status}}"></md-icon>
+        <div class="md-list-item-text">
+            <h3>{{ step.name }}</h3>
+            <p>Created: {{step.creationDate | date: 'short' }} - Ended: {{ step.endDate | date: 'short' }}</p>
+            <p>Assigned to: {{ step.performer.name }} - Status: {{ step.status }}</p>
+        </div>
+        <md-icon class="md-secondary" ng-click="viewActions($event)" aria-label="actions" md-svg-icon="core:expand_more"></md-icon>
+    </md-list-item>
+</md-list>
