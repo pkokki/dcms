@@ -90,6 +90,11 @@ angular.module('workspace', [
 				templateUrl: 'task.payment.html',
 				controller: 'taskPaymentController',
 			})
+			.state('reports', {
+				url: '/reports',
+				templateUrl: 'reports.html',
+				controller: 'reportsController',
+			})
             ;
     }])
 	.run(['$rootScope', '$state', function ($rootScope, $state) {
@@ -124,21 +129,22 @@ angular.module('workspace', [
   	 **************************** CONTROLLERS *******************************
   	 ************************************************************************/
   	.controller('appController', ['$scope', '$mdSidenav', '$state', 'spa', function($scope, $mdSidenav, $state, spa) {
-        $scope.goHome = function() {
-        	$state.go('home');
-        };
-        $scope.hasUser = spa.isSignedOn;
+		$scope.userMenuVisible = false;
+		$scope.navigateTo = navigateTo;
+		$scope.toggleSidenav = toggleSidenav;
+		$scope.toggleUserMenu = toggleUserMenu;
+		console.info('Workspace started');
 
-        $scope.goUserProfile = function() {
-        	$state.go('userProfile');
+        function navigateTo(route, evt) {
+        	$state.go(route);
+			toggleSidenav('left');
         };
-        $scope.toggleSidenav = function(id) {
+        function toggleSidenav(id) {
         	$mdSidenav(id).toggle();
         };
-		$scope.toggleUserMenu = function() {
+		function toggleUserMenu() {
         	$scope.userMenuVisible = !$scope.userMenuVisible;
         };
-        console.info('Workspace started');
     }])
   	.controller('homeController', ['$state', function($state) {
           $state.go('inbox');
@@ -462,5 +468,8 @@ angular.module('workspace', [
 				$state.go('task.subtasks', { id: task.id })
 			});
 		}
+	}])
+	.controller('reportsController', ['$scope', '$state', 'dcmsData', function($scope, $state, dcmsData) {
+
 	}])
     ;

@@ -52,7 +52,7 @@
 						<md-divider></md-divider>
 					</div>
 					<md-list>
-                        <md-list-item ng-click="navigateTo(setting.extraScreen, $event)">
+                        <md-list-item ng-click="navigateTo('inbox', $event)">
                             <md-icon md-svg-icon="core:menu"></md-icon>
                             <p>Inbox</p>
                         </md-list-item>
@@ -62,6 +62,16 @@
                         </md-list-item>
                     </md-list>
                     <md-divider></md-divider>
+					<md-list>
+                        <md-list-item ng-click="navigateTo(setting.extraScreen, $event)">
+                            <md-icon md-svg-icon="core:search"></md-icon>
+                            <p title="The Collections window opens with no customer data. You can search to find a customer.">Search</p>
+                        </md-list-item>
+                        <md-list-item ng-click="navigateTo('reports', $event)">
+                            <md-icon md-svg-icon="core:more_vert"></md-icon>
+                            <p title="Opens the Collections Reports page in Self Service Administration where you can run Collections reports">Reports</p>
+                        </md-list-item>
+                    </md-list>
 				</md-content>
 			</md-sidenav>
 			<div layout="column" flex>
