@@ -75,9 +75,15 @@ angular.module('workspace', [
 				templateUrl: 'task.notes.html',
 				controller: 'taskNotesController',
 			})
-			.state('task.tasks', {
-				url: '/tasks',
-				templateUrl: 'task.tasks.html',
+			.state('task.subtasks', {
+				url: '/subtasks',
+				templateUrl: 'task.subtasks.html',
+				controller: 'taskSubtasksController',
+			})
+			.state('task.subtask', {
+				url: '/subtasks/:subtaskId',
+				templateUrl: 'task.subtask.html',
+				controller: 'taskSubtaskController',
 			})
 			.state('task.payment', {
 				url: '/payment',
@@ -180,7 +186,7 @@ angular.module('workspace', [
 			'task.strategies': 5, 'task.strategy': 5,
 			'task.aging': 6,
 			'task.notes': 7,
-			'task.tasks': 8
+			'task.subtasks': 8, 'task.subtask': 8,
 		};
 		$scope.selectedTabIndex = tabStates[$state.current.name];
 		$scope.getTask = function() {
@@ -403,5 +409,58 @@ angular.module('workspace', [
 				});
 			}
 		};
+	}])
+	.controller('taskSubtasksController', ['$scope', '$state', 'dcmsData', function($scope, $state, dcmsData) {
+		initialize();
+		$scope.viewSubtask = viewSubtask;
+
+		function viewSubtask(subtask) {
+			$scope.getTask().then(function(task) {
+				$state.go('task.subtask', { id: task.id, subtaskId: subtask.id })
+			});
+		}
+		function initialize() {
+			$scope.getTask().then(function(task) {
+				if (!$scope.data.subtasks) {
+					dcmsData.getEntity('customerSubtasks', task.customer.subTaskListId).then(function(list){
+						$scope.data.subtasks = list;
+					});
+				}
+			});
+		}
+	}])
+	.controller('taskSubtaskController', ['$scope', '$state', '$stateParams', 'dcmsData', function($scope, $state, $stateParams, dcmsData) {
+		$scope.save = save;
+		$scope.cancel = cancel;
+		initialize();
+
+		function initialize() {
+			var subtaskId = $stateParams.subtaskId;
+			$scope.getTask().then(function(task) {
+				if ($scope.data.subtasks) {
+					$scope.subtask = findSubtask($scope.data.subtasks.items, subtaskId);
+				}
+				else {
+					dcmsData.getEntity('customerSubtasks', task.customer.subTaskListId).then(function(list){
+						$scope.subtask = findSubtask(list.items, subtaskId);
+					});
+				}
+			});
+		}
+		function findSubtask(list, id) {
+			for (var i = 0; i < list.length; i++) {
+				if (list[i].id == id)
+					return list[i];
+			}
+			return null;
+		}
+		function save() {
+			window.alert('save: Not implemeted!');
+		}
+		function cancel() {
+			$scope.getTask().then(function(task) {
+				$state.go('task.subtasks', { id: task.id })
+			});
+		}
 	}])
     ;

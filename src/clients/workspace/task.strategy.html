@@ -4,7 +4,6 @@
     <md-button ng-click="cancel()">cancel</md-button>
 </div>
 
-{{strategy || 'NULL'}}
 <md-list>
     <md-list-item class="md-3-line" ng-repeat="step in strategy.steps" ng-click="viewDetails(step)">
         <md-icon class="md-avatar" md-svg-icon="core:status-{{step.status}}"></md-icon>

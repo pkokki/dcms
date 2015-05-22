@@ -21,7 +21,7 @@
         <md-tab label="Strategies" md-on-select="go('strategies')" ng-disabled="!state.currentTask.customer.strategyListId"></md-tab>
         <md-tab label="Aging" md-on-select="go('aging')" ng-disabled="true"></md-tab>
         <md-tab label="Notes" md-on-select="go('notes')" ng-disabled="!state.currentTask"></md-tab>
-        <md-tab label="Tasks" md-on-select="go('tasks')" ng-disabled="true"></md-tab>
+        <md-tab label="Tasks" md-on-select="go('subtasks')" ng-disabled="!state.currentTask.customer.subTaskListId"></md-tab>
     </md-tabs>
 
     <div ui-view></div>

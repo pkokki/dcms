@@ -1,0 +1,60 @@
+<div layout="row" layout-align="center center">
+    <h2>{{subtask.name || 'New subtask' }}</h2>
+    <span flex></span>
+    <md-button ng-click="cancel()">cancel</md-button>
+    <md-button ng-click="save()">save</md-button>
+</div>
+
+<form name="subtaskForm">
+    <div layout>
+    	<md-input-container flex>
+    		<label>Name</label>
+    		<input md-maxlength="30" required ng-model="subtask.name"></input>
+    	</md-input-container>
+        <md-input-container flex>
+    		<label>Type</label>
+    		<input ng-model="subtask.type"></input>
+    	</md-input-container>
+    </div>
+    <div layout>
+        <md-input-container flex>
+    		<label>Description</label>
+    		<input ng-model="subtask.description"></input>
+    	</md-input-container>
+        <md-input-container flex>
+    		<label>Initiator</label>
+    		<input ng-model="subtask.initiator.name"></input>
+    	</md-input-container>
+    </div>
+    <div layout>
+        <md-input-container flex>
+    		<label>Priority</label>
+    		<input ng-model="subtask.priority"></input>
+    	</md-input-container>
+        <md-input-container flex>
+    		<label>Status</label>
+    		<input ng-model="subtask.status"></input>
+    	</md-input-container>
+    </div>
+    <div layout>
+        <md-input-container flex>
+    		<label>Start date</label>
+    		<input type='date' ng-model="subtask.creationDate" format-date></input>
+    	</md-input-container>
+        <md-input-container flex>
+    		<label>End date</label>
+    		<input type='date' ng-model="subtask.endDate" format-date></input>
+    	</md-input-container>
+    </div>
+    <div layout>
+        <md-input-container flex>
+    		<label>Owner type</label>
+    		<input ng-model="subtask.performer.type"></input>
+    	</md-input-container>
+        <md-input-container flex>
+    		<label>Owner</label>
+    		<input ng-model="subtask.performer.name"></input>
+    	</md-input-container>
+    </div>
+
+</form>

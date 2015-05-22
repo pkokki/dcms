@@ -302,7 +302,7 @@ angular.module('dcmsData', [
             },
             ],
             tasks: [
-                { id: 1, customer: { summaryId: 1, profileId: 1, historyId: 1, transactionListId: 1, strategyListId: 1, }}
+                { id: 1, customer: { summaryId: 1, profileId: 1, historyId: 1, transactionListId: 1, strategyListId: 1, subTaskListId: 1, }}
             ],
             taskComments: [{
                 id: 1,
@@ -351,6 +351,11 @@ angular.module('dcmsData', [
                     { id: 3, name: 'mid range customer strategy', status: 'completed', score: '0' },
                     { id: 4, name: 'low range customer strategy', status: 'completed', score: '40' },
                     { id: 5, name: 'low rank strategy for delinquencies', status: 'terminated', score: '40' },
+                ]},
+            ],
+            customerSubtasks: [
+                { id: 1, items: [
+                    { id: 1, name: 'sub task name', type: 'subtask type #1', status: 'pending', creationDate: '2015-05-09T21:00:00.000Z', endDate: null, performer: { type:'user', id: 1, name: 'pkokki' }},
                 ]},
             ],
         };

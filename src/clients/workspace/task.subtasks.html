@@ -1,0 +1,9 @@
+<md-list>
+    <md-list-item class="md-2-line" ng-repeat="item in data.subtasks.items" ng-click="viewSubtask(item)">
+        <div class="md-list-item-text">
+            <h3>{{item.name}}</h3>
+            <p>Type: {{item.type}} - Priority: {{item.priority}} - Status: {{item.status}}</p>
+        </div>
+        <md-icon class="md-secondary" ng-click="doSecondary($event)" aria-label="actions" md-svg-icon="core:more_vert"></md-icon>
+    </md-list-item>
+</md-list>
