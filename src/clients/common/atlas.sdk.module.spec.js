@@ -4,7 +4,6 @@ describe('atlas.sdk', function() {
         expect(true).toBe(true);
     });
 
-
     describe('atlasConfigFactory', function() {
         // configure = (options) -> atlasConfigFactory.create(options)
         var configFactory = null;
@@ -12,7 +11,6 @@ describe('atlas.sdk', function() {
         beforeEach(inject(function($injector) {
             configFactory = $injector.get('atlasConfigFactory');
         }));
-
 
         describe('create', function() {
             it('should be able to pass in a Config object as parameter', function() {
@@ -29,7 +27,6 @@ describe('atlas.sdk', function() {
                 expect(config.credentials.sessionToken).toEqual('SESSION');
             });
         });
-
         describe('region', function() {
             it('defaults to undefined', function() {
                 expect(configFactory.create().region).toBeUndefined();
@@ -133,11 +130,11 @@ describe('atlas.sdk', function() {
                 config.update({foo: 10}, true);
                 expect(config.foo).toEqual(10);
             });
-            it('should allow service identifiers to be set', function() {
-                var config = configFactory.create();
-                config.update({svc: {endpoint: 'localhost'}});
-                expect(config.svc).toEqual({endpoint: 'localhost'});
-            });
+            it('should allow service identifiers to be set', inject(function(atlas) {
+                var config = atlas.config;
+                config.update({identity: {endpoint: 'localhost'}});
+                expect(config.identity).toEqual({endpoint: 'localhost'});
+            }));
             it('should be able to update literal credentials', function() {
                 var config = configFactory.create();
                 config.update({
@@ -157,13 +154,97 @@ describe('atlas.sdk', function() {
                 expect(config.httpOptions.xhrSync).toEqual(true);
             });
         });
-        
         describe('getCredentials', function() {
+            function expectValid(options, key) {
+                var config = (options.set && options.clear) ? options : configFactory.create(options);
+                var spy = jasmine.createSpy('getCredentials callback');
+                config.getCredentials(spy);
+                expect(spy.calls.count()).toEqual(1);
+                expect(spy.calls.first().args[0]).not.toBeTruthy();
+                if (key)
+                    expect(config.credentials.accessKeyId).toEqual(key);
+            }
+            function expectError(options, message) {
+                var config = (options.set && options.clear) ? options : configFactory.create(options);
+                var spy = jasmine.createSpy('getCredentials callback');
+                config.getCredentials(spy);
+                expect(spy.calls.count()).toEqual(1);
+                expect(spy.calls.first().args[0].code).toEqual('CredentialsError');
+                expect(spy.calls.first().args[0].message).toEqual(message);
+            }
+
+            it('should check credentials for static object first', function() {
+                expectValid({
+                  credentials: {
+                    accessKeyId: '123',
+                    secretAccessKey: '456'
+                  }
+                });
+            });
+            it('should error if static credentials are not available', function() {
+                expectError({
+                  credentials: {}
+                }, 'Missing credentials');
+            });
+            it('should check credentials for async get() method', function() {
+                expectValid({
+                  credentials: {
+                    get: function(cb) {
+                      return cb();
+                    }
+                  }
+                });
+            });
+            it('should error if credentials.get() cannot resolve', function() {
+                var options;
+                options = {
+                  credentials: {
+                    constructor: {
+                      name: 'CustomCredentials'
+                    },
+                    get: function(cb) {
+                      return cb(new Error('Error!'), null);
+                    }
+                  }
+                };
+                expectError(options, 'Could not load credentials from CustomCredentials');
+            });
+            it('should check credentialProvider if no credentials', function() {
+                expectValid({
+                  credentials: null,
+                  credentialProvider: {
+                    resolve: function(cb) {
+                      return cb(null, {
+                        accessKeyId: 'key',
+                        secretAccessKey: 'secret'
+                      });
+                    }
+                  }
+                });
+            });
+            it('should error if credentialProvider fails to resolve', function() {
+                var options = {
+                  credentials: null,
+                  credentialProvider: {
+                    resolve: function(cb) {
+                      return cb(new Error('Error!'), null);
+                    }
+                  }
+                };
+                expectError(options, 'Could not load credentials from any providers');
+            });
+            it('should error if no credentials or credentialProvider', function() {
+                var options = {
+                  credentials: null,
+                  credentialProvider: null
+                };
+                expectError(options, 'No credentials to load');
+            });
         });
+
     });
 
-
-    describe('atlasCredentials provider', function() {
+    describe('atlasCredentialsFactoryProvider', function() {
         var provider;
 
         beforeEach(module('atlas.sdk', function(atlasCredentialsFactoryProvider) {
@@ -279,7 +360,7 @@ describe('atlas.sdk', function() {
         }
     });
 
-    xdescribe('atlasCredentialsFactory :: WebIdentityCredentials ::', function() {
+    describe('atlasCredentialsFactory :: WebIdentityCredentials ::', function() {
         beforeEach(module('atlas.sdk'));
 
         var creds = null;
@@ -292,18 +373,20 @@ describe('atlas.sdk', function() {
         }
         var mockSTS = function(expireTime) {
             spyOn(creds.service, 'assumeRoleWithWebIdentity').and.callFake(function (cb) {
-                expect(creds.service.config.params.RoleArn).toEqual('arn');
-                expect(creds.service.config.params.WebIdentityToken).toEqual('token');
-                expect(creds.service.config.params.RoleSessionName).toEqual('web-identity');
-                cb(null, {
-                    Credentials: {
-                        AccessKeyId: 'KEY',
-                        SecretAccessKey: 'SECRET',
-                        SessionToken: 'TOKEN',
-                        Expiration: expireTime
-                    },
-                    OtherProperty: true
-                })
+                expect(creds.service.params).toEqual({
+                  RoleArn: 'arn',
+                  WebIdentityToken: 'token',
+                  RoleSessionName: 'web-identity'
+                });
+                return cb(null, {
+                  Credentials: {
+                    AccessKeyId: 'KEY',
+                    SecretAccessKey: 'SECRET',
+                    SessionToken: 'TOKEN',
+                    Expiration: expireTime
+                  },
+                  OtherProperty: true
+                });
             });
         }
         describe('constructor', function() {
@@ -360,7 +443,7 @@ describe('atlas.sdk', function() {
         });
     });
 
-    xdescribe('atlasServiceFactory ::', function() {
+    describe('atlasServiceFactory ::', function() {
 
         var config = null;
         var service = null;
@@ -369,8 +452,8 @@ describe('atlas.sdk', function() {
         }
         beforeEach(function() {
             module('atlas.sdk');
-            inject(function(atlasConfig, atlasServiceFactory) {
-                config = atlasConfig;
+            inject(function(atlasGlobalConfig, atlasServiceFactory) {
+                config = atlasGlobalConfig;
                 //service = atlasServiceFactory.create(config);
             });
         });
@@ -385,26 +468,26 @@ describe('atlas.sdk', function() {
         describe('constructor ::', function() {
             it('should use atlas.config copy if no config is provided', inject(function(atlasServiceFactory) {
                 var service = atlasServiceFactory.create();
-                expect(service.config).not.toEqual(config)
+                expect(service.config).not.toEqual(config);
                 expect(service.config.sslEnabled).toEqual(true)
             }));
         });
 
     });
 
-    xdescribe('atlas provider', function() {
-        var provider;
-
-        beforeEach(module('atlas.sdk', function(atlasProvider) {
-            provider = atlasProvider;
-        }));
-
-        it('should have $get method', inject(function() {
-            expect(provider.$get).toBeTruthy();
-        }));
-
-        it('should have globalConfig property', inject(function() {
-            expect(provider.globalConfig).toBeTruthy();
-        }));
+    describe('atlas -->', function() {
+        beforeEach(module('atlas.sdk'));
+        describe('config', function() {
+            it('should be a default Config object', inject(function(atlas) {
+                expect(atlas.config.sslEnabled).toEqual(true);
+                expect(atlas.config.maxRetries).toBeUndefined();
+            }));
+            it('can set default config to an object literal', inject(function(atlas) {
+                var oldConfig = atlas.config;
+                atlas.config = {};
+                expect(atlas.config).toEqual({});
+                atlas.config = oldConfig;
+            }));
+        });
     });
 });

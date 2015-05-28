@@ -1,29 +1,53 @@
 angular.module('atlas.sdk', [
 	])
+
     .config([function () {
+
     }])
-    .service('atlasConfig', [function() {
-        return {
-            /** [Number] an offset value in milliseconds to apply to all signing
+
+    .service('atlasGlobalConfig', [function() {
+		var keys = {
+			credentials: null,
+			credentialProvider: null,
+			region: undefined,
+			logger: null,
+			apiVersions: {},
+			apiVersion: null,
+			endpoint: undefined,
+			httpOptions: {
+			  timeout: 120000
+			},
+			maxRetries: undefined,
+			maxRedirects: 10,
+			paramValidation: true,
+			/* whether SSL is enabled for requests */
+			sslEnabled: true,
+			computeChecksums: true,
+			/** [Number] an offset value in milliseconds to apply to all signing
              *  times. Use this to compensate for clock skew when your system may be
              *  out of sync with the service time. Note that this configuration option
-             *  can only be applied to the global `atlasConfig` object and cannot be
+             *  can only be applied to the global `atlasGlobalConfig` object and cannot be
              *  overridden in service-specific configuration. Defaults to 0 milliseconds.
              */
-            systemClockOffset: 0,
-            /* whether SSL is enabled for requests */
-            sslEnabled: true,
-        };
+			systemClockOffset: 0,
+			signatureVersion: null,
+			//convertResponseTypes: true,
+			//dynamoDbCrc32: true,
+			//s3ForcePathStyle: false,
+			//s3BucketEndpoint: false,
+		};
+        return keys;
     }])
-    .service('atlasUtil', ['atlasConfig', function(atlasConfig) {
+
+    .service('atlasUtil', ['atlasGlobalConfig', function(atlasGlobalConfig) {
         /* Date and time utility functions. */
         var dateUtil = {
             /**
              * @return [Date] the current JavaScript date object.
              */
             getDate: function() {
-                if (atlasConfig.systemClockOffset) {
-                    return new Date(new Date().getTime() + atlasConfig.systemClockOffset);
+                if (atlasGlobalConfig.systemClockOffset) {
+                    return new Date(new Date().getTime() + atlasGlobalConfig.systemClockOffset);
                 }
                 else {
                     return new Date();
@@ -69,6 +93,33 @@ angular.module('atlas.sdk', [
                     }
                 }
             },
+			error: function error(err, options) {
+				var originalError = null;
+				if (typeof err.message === 'string' && err.message !== '') {
+					if (typeof options === 'string' || (options && options.message)) {
+						originalError = angular.extend({}, err);
+						originalError.message = err.message;
+					}
+				}
+				err.message = err.message || null;
+				if (typeof options === 'string') {
+					err.message = options;
+				} else {
+					angular.extend(err, options);
+				}
+
+				if (typeof Object.defineProperty === 'function') {
+					Object.defineProperty(err, 'name', {writable: true, enumerable: false});
+					Object.defineProperty(err, 'message', {enumerable: true});
+				}
+
+				err.name = err.name || err.code || 'Error';
+				err.time = new Date();
+
+				if (originalError) err.originalError = originalError;
+
+				return err;
+			},
         }
         return util;
 
@@ -99,6 +150,7 @@ angular.module('atlas.sdk', [
             return features.constructor;
         }
     }])
+
     .provider('atlasCredentialsFactory', [function () {
         /* (Integer) */
         var expiryWindow = this.expiryWindow = 15;
@@ -192,7 +244,7 @@ angular.module('atlas.sdk', [
                   * Creates a new credentials object.
                   * @param (see atlasSecurityTokenService.assumeRoleWithWebIdentity)
                   * @example Creating a new credentials object
-                  *   atlasConfig.credentials = atlasCredentialsFactory.createWebIdentityCredentials({
+                  *   atlasGlobalConfig.credentials = atlasCredentialsFactory.createWebIdentityCredentials({
                   *     RoleArn: 'arn:atlas:iam::<ATLAS_ACCOUNT_ID>:role/<WEB_IDENTITY_ROLE_NAME>',
                   *     WebIdentityToken: 'ACCESS_TOKEN',       // token from identity service
                   *     RoleSessionName: 'web'                  // optional name, defaults to web-identity
@@ -246,6 +298,7 @@ angular.module('atlas.sdk', [
             }
         }];
     }])
+
     .factory('atlasRegionConfig', ['atlasUtil', function(atlasUtil) {
         var regionConfig = { /* from region_config.json */
             rules: {},
@@ -314,40 +367,14 @@ angular.module('atlas.sdk', [
             });
         }
     }])
-    .factory('atlasServiceFactory', ['atlasUtil', 'atlasConfig', 'atlasRegionConfig', function(atlasUtil, atlasConfig, atlasRegionConfig) {
+
+	.factory('atlasServiceFactory', ['atlasUtil', 'atlasGlobalConfig', 'atlasRegionConfig', function(atlasUtil, atlasGlobalConfig, atlasRegionConfig) {
         var _serviceMap = {};
         /* The service class representing an atlas service. */
-        var atlasBaseService = {
-            initialize: function initialize(instance, config) {
-                var svcConfig = atlasConfig[this.serviceIdentifier];
-                instance.config = angular.extend(atlasConfig, svcConfig, config);
-                this.validateService();
-                if (!instance.config.endpoint)
-                    atlasRegionConfig(instance);
-
-                //instance.config.endpoint = instance.endpointFromTemplate(instance.config.endpoint);
-                //instance.setEndpoint(instance.config.endpoint);
-            },
+		var emptyService = {
+			api: {},
+            defaultRetryCount: 3,
             validateService: function validateService() {
-            },
-            loadServiceClass: function loadServiceClass(serviceConfig) {
-                var config = serviceConfig;
-                if (!atlasUtil.isEmpty(this.api)) {
-                    return null;
-                }
-                else if (config.apiConfig) {
-                    return AWS.Service.defineServiceApi(this.constructor, config.apiConfig);
-                }
-                else if (!this.constructor.services) {
-                    return null;
-                }
-                else {
-                    config = new AWS.Config(AWS.config);
-                    config.update(serviceConfig, true);
-                    var version = config.apiVersions[this.constructor.serviceIdentifier];
-                    version = version || config.apiVersion;
-                    return this.getLatestServiceClass(version);
-                }
             },
             getLatestServiceClass: function getLatestServiceClass(version) {
                 throw 'getLatestServiceClass: Not implemented!';
@@ -355,8 +382,6 @@ angular.module('atlas.sdk', [
             getLatestServiceVersion: function getLatestServiceVersion(version) {
                 throw 'getLatestServiceVersion: Not implemented!';
             },
-            api: {},
-            defaultRetryCount: 3,
             makeRequest: function makeRequest(operation, params, callback) {
                 throw 'makeRequest: Not implemented!';
             },
@@ -440,14 +465,44 @@ angular.module('atlas.sdk', [
         }
 
         function create(features) {
-            var instance = angular.extend({}, features || {});
-
-            var serviceClass = atlasBaseService.loadServiceClass(config || {});
+            var instance = angular.extend(emptyService, features || {});
+            var serviceClass = loadServiceClass(instance, config || {});
             if (serviceClass)
                 return new ServiceClass(config);
-            atlasBaseService.initialize(instance, config);
-            return instance;
-        };
+			initialize(instance, config);
+			return instance;
+        }
+
+		function loadServiceClass(instance, serviceConfig) {
+			var config = serviceConfig;
+			if (!atlasUtil.isEmpty(instance.api)) {
+				return null;
+			}
+			else if (config.apiConfig) {
+				return AWS.Service.defineServiceApi(instance.constructor, config.apiConfig);
+			}
+			else if (!instance.constructor.services) {
+				return null;
+			}
+			else {
+				config = new AWS.Config(AWS.config);
+				config.update(serviceConfig, true);
+				var version = config.apiVersions[instance.constructor.serviceIdentifier];
+				version = version || config.apiVersion;
+				return this.getLatestServiceClass(version);
+			}
+		}
+
+		function initialize(instance, config) {
+			var svcConfig = atlasGlobalConfig[instance.serviceIdentifier];
+			instance.config = angular.extend({}, atlasGlobalConfig, svcConfig, config);
+			instance.validateService();
+			if (!instance.config.endpoint)
+				atlasRegionConfig(instance);
+
+			//instance.config.endpoint = instance.endpointFromTemplate(instance.config.endpoint);
+			//instance.setEndpoint(instance.config.endpoint);
+		}
 
         /**
           * Defines a new Service class using a service identifier and list of versions
@@ -465,7 +520,7 @@ angular.module('atlas.sdk', [
                 features = versions;
                 versions = [];
             }
-            var svc = atlasUtil.inherit(atlasBaseService, features || {});
+            var svc = atlasUtil.inherit(emptyService, features || {});
 
             if (typeof serviceIdentifier === 'string') {
                 addVersions(svc, versions);
@@ -506,6 +561,7 @@ angular.module('atlas.sdk', [
 
 
     }])
+
     .factory('atlasSecurityTokenService', ['atlasServiceFactory', function(atlasServiceFactory) {
         var factory = function create(params) {
             var instance = atlasServiceFactory.create(params);
@@ -542,9 +598,6 @@ angular.module('atlas.sdk', [
         };
         return factory;
     }])
-
-
-
 
 	.factory('atlasSequentialExecutor', [function() {
 		var _events = {};
@@ -719,31 +772,8 @@ angular.module('atlas.sdk', [
 		}
 	}])
 
-	.factory('atlasConfigFactory', ['atlasUtil', 'atlasCredentialsFactory', function (atlasUtil, atlasCredentialsFactory) {
-		/* All of the keys with their default values. */
-		var keys = {
-			credentials: null,
-			credentialProvider: null,
-			region: undefined,
-			logger: null,
-			apiVersions: {},
-			apiVersion: null,
-			endpoint: undefined,
-			httpOptions: {
-			  timeout: 120000
-			},
-			maxRetries: undefined,
-			maxRedirects: 10,
-			paramValidation: true,
-			sslEnabled: true,
-			//s3ForcePathStyle: false,
-			//s3BucketEndpoint: false,
-			computeChecksums: true,
-			//convertResponseTypes: true,
-			//dynamoDbCrc32: true,
-			systemClockOffset: 0,
-			signatureVersion: null
-		};
+	.factory('atlasConfigFactory', ['atlasUtil', 'atlasGlobalConfig', 'atlasServiceFactory', 'atlasCredentialsFactory', function (atlasUtil, atlasGlobalConfig, atlasServiceFactory, atlasCredentialsFactory) {
+
 		var factory = {
 			create: create,
 		};
@@ -758,7 +788,7 @@ angular.module('atlas.sdk', [
 				set : function set(property, value, defaultValue) {
 					if (value === undefined) {
 						if (defaultValue === undefined) {
-							defaultValue = keys[property];
+							defaultValue = atlasGlobalConfig[property];
 						}
 						if (typeof defaultValue === 'function') {
 							this[property] = defaultValue.call(this);
@@ -779,29 +809,78 @@ angular.module('atlas.sdk', [
 					allowUnknownKeys = allowUnknownKeys || false;
 					options = extractCredentials(options);
 					for (var key in options) {
-						if (allowUnknownKeys || keys.hasOwnProperty(key) || hasService(key)) {
+						if (allowUnknownKeys || atlasGlobalConfig.hasOwnProperty(key) || hasService(key)) {
 							this.set(key, options[key]);
 						}
 					};
 				},
 				clear: function clear() {
-					for (var key in keys) {
+					for (var key in atlasGlobalConfig) {
 						delete this[key];
 					};
 
 					// reset credential provider
 					this.set('credentials', undefined);
 					this.set('credentialProvider', undefined);
-				}
+				},
+				getCredentials: function getCredentials(callback) {
+					var self = this;
+					if (self.credentials) {
+						if (typeof self.credentials.get === 'function') {
+							getAsyncCredentials();
+						}
+						else { // static credentials
+							getStaticCredentials();
+						}
+					}
+					else if (self.credentialProvider) {
+						self.credentialProvider.resolve(function(err, creds) {
+							if (err) {
+								err = credError('Could not load credentials from any providers', err);
+							}
+							self.credentials = creds;
+							finish(err);
+						});
+					}
+					else {
+						finish(credError('No credentials to load'));
+					}
+
+					function finish(err) {
+				      callback(err, err ? null : self.credentials);
+				    }
+					function credError(msg, err) {
+						return atlasUtil.error(err || new Error(), {
+							code: 'CredentialsError', message: msg
+						});
+				    }
+					function getAsyncCredentials() {
+						self.credentials.get(function(err) {
+							if (err) {
+								var msg = 'Could not load credentials from ' +
+									self.credentials.constructor.name;
+          						err = credError(msg, err);
+        					}
+        					finish(err);
+      					});
+    				}
+					function getStaticCredentials() {
+						var err = null;
+						if (!self.credentials.accessKeyId || !self.credentials.secretAccessKey) {
+							err = credError('Missing credentials');
+						}
+						finish(err);
+					}
+				},
 			};
-			for (var key in keys) {
+			for (var key in atlasGlobalConfig) {
 				config.set(key, options[key], config[key]);
 			}
 			return config;
 		}
 
 		function hasService(serviceIdentifier) {
-			return false;
+			return atlasServiceFactory.hasService(serviceIdentifier);
 		}
 
 		/* Extracts accessKeyId, secretAccessKey and sessionToken from a configuration hash. */
@@ -813,49 +892,253 @@ angular.module('atlas.sdk', [
     		return options;
 		}
 	}])
-	.provider('atlas', [function () {
-        this.$get = [
+
+	.factory('atlasApiLoader', ['atlasUtil', function (atlasUtil) {
+		var __dirname = '__dirname';
+		var files = {
+			'__dirname/../apis/metadata.json': {
+				//'cloudwatchlogs': {
+				//	'prefix': 'logs',
+				//	'name': 'CloudWatchLogs',
+				//	'versions': [],
+				//},
+				'identity': {
+					'name': 'Identity Service',
+					'versions': [ '5.0' ],
+				},
+				'appsettings': {
+					'name': 'Application Settings Service',
+					'versions': [ '5.0' ],
+				},
+				'orgmodel': {
+					'name': 'Organizational Model Service',
+					'versions': [ '5.0' ],
+				},
+				'case': {
+					'name': 'Case Service',
+					'versions': [ '5.0' ],
+				},
+				'task': {
+					'name': 'Human Task Service',
+					'versions': [ '5.0' ],
+				},
+				'cmis': {
+					'name': 'Content Management Service',
+					'versions': [ '5.0' ],
+				},
+				'template': {
+					'name': 'Template Service',
+					'versions': [ '5.0' ],
+				},
+				'rule': {
+					'name': 'Business Rule Service',
+					'versions': [ '5.0' ],
+				},
+				'data': {
+					'name': 'Business Data Service',
+					'versions': [ '5.0' ],
+				},
+			},
+			'__dirname/../apis/sts-2011-06-16.min.json': {
+				version: '5.0',
+				metadata: {
+					apiVersion: '2011-06-16',
+					endpointPrefix: 'sts',
+					globalEndpoint: 'sts.amazonaws.com',
+					serviceAbbreviation: 'AWS STS',
+					serviceFullName: 'AWS Security Token Service',
+					signatureVersion: 'v4',
+					xmlNamespace: 'https://sts.amazonaws.com/doc/2011-06-15/',
+					protocol: 'query'
+				},
+				operations: {
+					"GetSessionToken": {
+						input: {},
+						output: {},
+					},
+				},
+				shapes: {
+				}
+			}
+		};
+		var fs = {
+			readdirSync: function(apiRoot) {
+				return files.keys;
+			},
+			existsSync: function(path) {
+				return files[path] ? true : false;
+			}
+		};
+		function require(path) {
+			var json = files[path];
+			if (json)
+				return json;
+			throw path + ' not found!'
+		}
+		var path = {
+			join: function() {
+				var s = arguments[0];
+				for (var i = 1; i < arguments.length; i++)
+					s += '/' + arguments[i];
+				return s;
+			}
+		};
+
+		var apiRoot = path.join(__dirname, '..', 'apis');
+		var serviceMap = null;
+		var serviceIdentifiers = [];
+		var serviceNames = [];
+
+		var service = {
+			serviceVersions: serviceVersions,
+			serviceName: serviceName,
+			serviceIdentifier: serviceIdentifier,
+			serviceFile: serviceFile,
+			load: load,
+		};
+		Object.defineProperty(service, 'services', {
+			enumerable: true, get: getServices
+		});
+		Object.defineProperty(service, 'serviceNames', {
+			enumerable: true, get: getServiceNames
+		});
+		return service;
+
+		function buildServiceMap() {
+			if (serviceMap !== null) return;
+
+			// load info file for API metadata:
+			serviceMap =  require(path.join(apiRoot, 'metadata.json'));
+
+			var prefixMap = {};
+			Object.keys(serviceMap).forEach(function(identifier) {
+				serviceMap[identifier].prefix = serviceMap[identifier].prefix || identifier;
+				prefixMap[serviceMap[identifier].prefix] = identifier;
+			});
+
+			/*
+			fs.readdirSync(apiRoot).forEach(function (file) {
+				var match = file.match(/^(.+?)-(\d+-\d+-\d+)\.(normal|min)\.json$/);
+				if (match) {
+					var id = prefixMap[match[1]], version = match[2];
+					if (serviceMap[id]) {
+						serviceMap[id].versions = serviceMap[id].versions || [];
+						if (serviceMap[id].versions.indexOf(version) < 0) {
+							serviceMap[id].versions.push(version);
+						}
+					}
+				}
+			});
+			*/
+
+			Object.keys(serviceMap).forEach(function(identifier) {
+				serviceMap[identifier].versions = serviceMap[identifier].versions.sort();
+				serviceIdentifiers.push(identifier);
+				serviceNames.push(serviceMap[identifier].name);
+			});
+		}
+		function getServices() {
+			buildServiceMap();
+			return serviceIdentifiers;
+		}
+		function getServiceNames() {
+			buildServiceMap();
+			return serviceNames;
+		}
+		function serviceVersions(svc) {
+			buildServiceMap();
+			svc = serviceIdentifier(svc);
+			return serviceMap[svc] ? serviceMap[svc].versions : null;
+		}
+		function serviceName(svc) {
+			buildServiceMap();
+			svc = serviceIdentifier(svc);
+			return serviceMap[svc] ? serviceMap[svc].name : null;
+		}
+		function serviceFile(svc, version) {
+			buildServiceMap();
+			svc = serviceIdentifier(svc);
+			if (!serviceMap[svc]) return null;
+
+			var prefix = serviceMap[svc].prefix || svc;
+			var filePath;
+			//['min', 'api', 'normal'].some(function(testSuffix) {
+				var testSuffix = 'min';
+				filePath = apiRoot + '/' + prefix.toLowerCase() + '-' + version + '.' + testSuffix + '.json';
+			//	return fs.existsSync(filePath);
+			//});
+			return filePath;
+		}
+
+		function paginatorsFile(svc, version) {
+			buildServiceMap();
+			svc = serviceIdentifier(svc);
+			if (!serviceMap[svc]) return null;
+
+			var prefix = serviceMap[svc].prefix || svc;
+			return apiRoot + '/' + prefix + '-' + version + '.paginators.json';
+		}
+		function waitersFile(svc, version) {
+			buildServiceMap();
+			svc = serviceIdentifier(svc);
+			if (!serviceMap[svc]) return null;
+
+			var prefix = serviceMap[svc].prefix || svc;
+			return apiRoot + '/' + prefix + '-' + version + '.waiters.json';
+		}
+
+		function load(svc, version) {
+			buildServiceMap();
+			svc = serviceIdentifier(svc);
+			if (version === 'latest') version = null;
+			version = version || serviceMap[svc].versions[serviceMap[svc].versions.length - 1];
+			if (!serviceMap[svc]) return null;
+
+			var api = require(serviceFile(svc, version));
+
+			// Try to load paginators
+			if (fs.existsSync(paginatorsFile(svc, version))) {
+				var paginators = require(paginatorsFile(svc, version));
+				api.paginators = paginators.pagination;
+			}
+
+			// Try to load waiters
+			if (fs.existsSync(waitersFile(svc, version))) {
+				var waiters = require(waitersFile(svc, version));
+				api.waiters = waiters.waiters;
+			}
+
+			return api;
+		}
+		function serviceIdentifier(svc) {
+			return svc.toLowerCase();
+		}
+	}])
+
+	.provider('atlasCore', [function() {
+		this.$get = [
 			'atlasUtil',
 			'atlasConfigFactory',
+			'atlasServiceFactory',
+			'atlasCredentialsFactory',
 			'atlasSequentialExecutor',
-			function atlasFactory(
+			function (
 				atlasUtil,
-				atlasConfig,
+				atlasConfigFactory,
+				atlasServiceFactory,
+				atlasCredentialsFactory,
 				atlasSequentialExecutor) {
-
-			var atlas = {
+			var core = {
 				/**
-				 * CONSTANT
-				 */
+				* CONSTANT
+				*/
 				VERSION: '0.1',
 				/**
-				 * A set of utility methods for use with the atlas SDK.
-				 */
+				* A set of utility methods for use with the atlas SDK.
+				*/
 				util: atlasUtil,
-				/**
-				 * The main configuration class used by all service objects to set
- 				 * the region, credentials, and other options for requests.
-				 */
-				config: atlasConfigFactory.create(),
-				/**
-				 * @readonly
-				 * @return [atlasSequentialExecutor] a collection of global event listeners that
-				 *   are attached to every sent request.
-				 * @see atlasRequest for a list of events to listen for
-				 * @example Logging the time taken to send a request
-				 *   atlas.events.on('send', function startSend(resp) {
-				 *     resp.startTime = new Date().getTime();
-				 *   }).on('complete', function calculateTime(resp) {
-				 *     var time = (new Date().getTime() - resp.startTime) / 1000;
-				 *     console.log('Request took ' + time + ' seconds');
-				 *   });
-				 *
-				 *   atlas.<serviceName>.<operationName>(); // prints 'Request took 0.285 seconds'
-				 */
-				events: atlasSequentialExecutor,
-
 				/* @api private */
-				//apiLoader: function() { throw new Error('atlas.$get: No API loader set'); },
+				apiLoader: function() { throw new Error('atlas.$get: No API loader set'); },
 				/* @api private */
 				//Signers: {},
 				/* @api private */
@@ -886,27 +1169,70 @@ angular.module('atlas.sdk', [
 				//},
 			};
 
-			//require('./service');
+			// DONE: require('./service');
+			core.service = atlasServiceFactory;
 
-			//require('./credentials');
+			// DONE: require('./credentials');
+			core.credentials = atlasCredentialsFactory;
+
 			//require('./credentials/credential_provider_chain');
 			//require('./credentials/temporary_credentials');
 			//require('./credentials/web_identity_credentials');
 			//require('./credentials/cognito_identity_credentials');
 			//require('./credentials/saml_credentials');
 
-			//require('./config');
+			/**
+			* The main configuration class used by all service objects to set
+			* the region, credentials, and other options for requests.
+			*/
+			// DONE: require('./config');
+			core.config = atlasConfigFactory.create();
+
 			//require('./http');
+
+			/**
+			* @readonly
+			* @return [atlasSequentialExecutor] a collection of global event listeners that
+			*   are attached to every sent request.
+			* @see atlasRequest for a list of events to listen for
+			* @example Logging the time taken to send a request
+			*   atlas.events.on('send', function startSend(resp) {
+			*     resp.startTime = new Date().getTime();
+			*   }).on('complete', function calculateTime(resp) {
+			*     var time = (new Date().getTime() - resp.startTime) / 1000;
+			*     console.log('Request took ' + time + ' seconds');
+			*   });
+			*
+			*   atlas.<serviceName>.<operationName>(); // prints 'Request took 0.285 seconds'
+			*/
 			// DONE: require('./sequential_executor');
+			core.events = atlasSequentialExecutor;
+
 			//require('./event_listeners');
 			//require('./request');
 			//require('./response');
 			//require('./resource_waiter');
 			//require('./signers/request_signer');
 			//require('./param_validator');
+			return core;
+		}];
+	}])
 
+	.provider('atlas', [function () {
+        this.$get = [
+			'atlasCore',
+			'atlasApiLoader',
+			function atlasFactory(
+				atlasCore,
+				atlasApiLoader) {
+
+			/********************* core **********************/
+			var atlas = angular.extend({}, atlasCore)
+
+			/********************* atlas **********************/
 			// Use default API loader function
-			//require('./api_loader').load;
+			// DONE: require('./api_loader').load;
+			atlas.apiLoader = atlasApiLoader.load;
 
 			// Load the xml2js XML parser
 			// AWS.XML.Parser = require('./xml/node_parser');
@@ -915,7 +1241,15 @@ angular.module('atlas.sdk', [
 			// require('./http/node');
 
 			// Load all service classes
-			// require('./services');
+			// DONE: require('./services');
+			atlasApiLoader.services.forEach(function(identifier) {
+				var name = atlasApiLoader.serviceName(identifier);
+				var versions = atlasApiLoader.serviceVersions(identifier);
+				this[name] = atlas.service.defineService(identifier, versions);
+				// load any customizations from lib/services/<svcidentifier>.js
+				//var svcFile = path.join(__dirname, 'services', identifier + '.js');
+				//if (fs.existsSync(svcFile)) require('./services/' + identifier);
+			});
 
 			// Load custom credential providers
 			// require('./credentials/ec2_metadata_credentials');
