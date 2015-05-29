@@ -39,7 +39,924 @@ angular.module('atlas.sdk', [
         return keys;
     }])
 
-    .service('atlasUtil', ['atlasGlobalConfig', function(atlasGlobalConfig) {
+	.service('atlasQuerystring', [function() {
+		// https://github.com/joyent/node/blob/master/lib/querystring.js
+		var util = {
+			isObject: function(arg) { return typeof arg === 'object' && arg !== null; },
+			isString: function(arg) { return typeof arg === 'string'; },
+			isNullOrUndefined: function(arg) { return arg == null; },
+			isNull: function(arg) { return arg === null; },
+			isBoolean: function(arg) { return typeof arg === 'boolean'; },
+			isNumber: function(arg) { typeof arg === 'number'; },
+			isArray: function(arg) { return angular.isArray(arg); },
+		};
+
+		var QueryString = {};
+
+		function charCode(c) {
+			return c.charCodeAt(0);
+		}
+
+		// a safe fast alternative to decodeURIComponent
+		QueryString.unescapeBuffer = function(s, decodeSpaces) {
+		  var out = new Buffer(s.length);
+		  var state = 'CHAR'; // states: CHAR, HEX0, HEX1
+		  var n, m, hexchar;
+
+		  for (var inIndex = 0, outIndex = 0; inIndex <= s.length; inIndex++) {
+		    var c = s.charCodeAt(inIndex);
+		    switch (state) {
+		      case 'CHAR':
+		        switch (c) {
+		          case charCode('%'):
+		            n = 0;
+		            m = 0;
+		            state = 'HEX0';
+		            break;
+		          case charCode('+'):
+		            if (decodeSpaces) c = charCode(' ');
+		            // pass thru
+		          default:
+		            out[outIndex++] = c;
+		            break;
+		        }
+		        break;
+
+		      case 'HEX0':
+		        state = 'HEX1';
+		        hexchar = c;
+		        if (charCode('0') <= c && c <= charCode('9')) {
+		          n = c - charCode('0');
+		        } else if (charCode('a') <= c && c <= charCode('f')) {
+		          n = c - charCode('a') + 10;
+		        } else if (charCode('A') <= c && c <= charCode('F')) {
+		          n = c - charCode('A') + 10;
+		        } else {
+		          out[outIndex++] = charCode('%');
+		          out[outIndex++] = c;
+		          state = 'CHAR';
+		          break;
+		        }
+		        break;
+
+		      case 'HEX1':
+		        state = 'CHAR';
+		        if (charCode('0') <= c && c <= charCode('9')) {
+		          m = c - charCode('0');
+		        } else if (charCode('a') <= c && c <= charCode('f')) {
+		          m = c - charCode('a') + 10;
+		        } else if (charCode('A') <= c && c <= charCode('F')) {
+		          m = c - charCode('A') + 10;
+		        } else {
+		          out[outIndex++] = charCode('%');
+		          out[outIndex++] = hexchar;
+		          out[outIndex++] = c;
+		          break;
+		        }
+		        out[outIndex++] = 16 * n + m;
+		        break;
+		    }
+		  }
+
+		  // TODO support returning arbitrary buffers.
+
+		  return out.slice(0, outIndex - 1);
+		};
+
+		QueryString.unescape = function(s, decodeSpaces) {
+		  try {
+		    return decodeURIComponent(s);
+		  } catch (e) {
+		    return QueryString.unescapeBuffer(s, decodeSpaces).toString();
+		  }
+		};
+
+		QueryString.escape = function(str) {
+		  return encodeURIComponent(str);
+		};
+
+		var stringifyPrimitive = function(v) {
+		  if (util.isString(v))
+		    return v;
+		  if (util.isBoolean(v))
+		    return v ? 'true' : 'false';
+		  if (util.isNumber(v))
+		    return isFinite(v) ? v : '';
+		  return '';
+		};
+
+		QueryString.stringify = QueryString.encode = function(obj, sep, eq, options) {
+		  sep = sep || '&';
+		  eq = eq || '=';
+
+		  var encode = QueryString.escape;
+		  if (options && typeof options.encodeURIComponent === 'function') {
+		    encode = options.encodeURIComponent;
+		  }
+
+		  if (util.isObject(obj)) {
+		    var keys = Object.keys(obj);
+		    var fields = [];
+
+		    for (var i = 0; i < keys.length; i++) {
+		      var k = keys[i];
+		      var v = obj[k];
+		      var ks = encode(stringifyPrimitive(k)) + eq;
+
+		      if (util.isArray(v)) {
+		        for (var j = 0; j < v.length; j++)
+		          fields.push(ks + encode(stringifyPrimitive(v[j])));
+		      } else {
+		        fields.push(ks + encode(stringifyPrimitive(v)));
+		      }
+		    }
+		    return fields.join(sep);
+		  }
+		  return '';
+		};
+
+		// Parse a key=val string.
+		QueryString.parse = QueryString.decode = function(qs, sep, eq, options) {
+		  sep = sep || '&';
+		  eq = eq || '=';
+		  var obj = {};
+
+		  if (!util.isString(qs) || qs.length === 0) {
+		    return obj;
+		  }
+
+		  var regexp = /\+/g;
+		  qs = qs.split(sep);
+
+		  var maxKeys = 1000;
+		  if (options && util.isNumber(options.maxKeys)) {
+		    maxKeys = options.maxKeys;
+		  }
+
+		  var len = qs.length;
+		  // maxKeys <= 0 means that we should not limit keys count
+		  if (maxKeys > 0 && len > maxKeys) {
+		    len = maxKeys;
+		  }
+
+		  var decode = QueryString.unescape;
+		  if (options && typeof options.decodeURIComponent === 'function') {
+		    decode = options.decodeURIComponent;
+		  }
+
+		  for (var i = 0; i < len; ++i) {
+		    var x = qs[i].replace(regexp, '%20'),
+		        idx = x.indexOf(eq),
+		        kstr, vstr, k, v;
+
+		    if (idx >= 0) {
+		      kstr = x.substr(0, idx);
+		      vstr = x.substr(idx + 1);
+		    } else {
+		      kstr = x;
+		      vstr = '';
+		    }
+
+		    try {
+		      k = decode(kstr);
+		      v = decode(vstr);
+		    } catch (e) {
+		      k = QueryString.unescape(kstr, true);
+		      v = QueryString.unescape(vstr, true);
+		    }
+
+		    if (!hasOwnProperty(obj, k)) {
+		      obj[k] = v;
+		    } else if (util.isArray(obj[k])) {
+		      obj[k].push(v);
+		    } else {
+		      obj[k] = [obj[k], v];
+		    }
+		  }
+
+		  return obj;
+		};
+
+		return QueryString;
+	}])
+
+	.service('atlasUrl', ['atlasQuerystring', function(atlasQuerystring) {
+		// https://github.com/joyent/node/blob/master/lib/url.js
+		var util = {
+			isObject: function(arg) { return typeof arg === 'object' && arg !== null; },
+			isString: function(arg) { return typeof arg === 'string'; },
+			isNullOrUndefined: function(arg) { return arg == null; },
+			isNull: function(arg) { return arg === null; },
+		};
+
+		function Url() {
+			this.protocol = null;
+			this.slashes = null;
+			this.auth = null;
+			this.host = null;
+			this.port = null;
+			this.hostname = null;
+			this.hash = null;
+			this.search = null;
+			this.query = null;
+			this.pathname = null;
+			this.path = null;
+			this.href = null;
+		}
+
+		// Reference: RFC 3986, RFC 1808, RFC 2396
+
+		// define these here so at least they only have to be
+		// compiled once on the first module load.
+		var protocolPattern = /^([a-z0-9.+-]+:)/i,
+		    portPattern = /:[0-9]*$/,
+
+		    // Special case for a simple path URL
+		    simplePathPattern = /^(\/\/?(?!\/)[^\?\s]*)(\?[^\s]*)?$/,
+
+		    // RFC 2396: characters reserved for delimiting URLs.
+		    // We actually just auto-escape these.
+		    delims = ['<', '>', '"', '`', ' ', '\r', '\n', '\t'],
+
+		    // RFC 2396: characters not allowed for various reasons.
+		    unwise = ['{', '}', '|', '\\', '^', '`'].concat(delims),
+
+		    // Allowed by RFCs, but cause of XSS attacks.  Always escape these.
+		    autoEscape = ['\''].concat(unwise),
+		    // Characters that are never ever allowed in a hostname.
+		    // Note that any invalid chars are also handled, but these
+		    // are the ones that are *expected* to be seen, so we fast-path
+		    // them.
+		    nonHostChars = ['%', '/', '?', ';', '#'].concat(autoEscape),
+		    hostEndingChars = ['/', '?', '#'],
+		    hostnameMaxLen = 255,
+		    hostnamePartPattern = /^[+a-z0-9A-Z_-]{0,63}$/,
+		    hostnamePartStart = /^([+a-z0-9A-Z_-]{0,63})(.*)$/,
+		    // protocols that can allow "unsafe" and "unwise" chars.
+		    unsafeProtocol = {
+		      'javascript': true,
+		      'javascript:': true
+		    },
+		    // protocols that never have a hostname.
+		    hostlessProtocol = {
+		      'javascript': true,
+		      'javascript:': true
+		    },
+		    // protocols that always contain a // bit.
+		    slashedProtocol = {
+		      'http': true,
+		      'https': true,
+		      'ftp': true,
+		      'gopher': true,
+		      'file': true,
+		      'http:': true,
+		      'https:': true,
+		      'ftp:': true,
+		      'gopher:': true,
+		      'file:': true
+		    },
+		    querystring = atlasQuerystring;
+
+		function urlParse(url, parseQueryString, slashesDenoteHost) {
+			if (url && util.isObject(url) && url instanceof Url) return url;
+
+			var u = new Url;
+			u.parse(url, parseQueryString, slashesDenoteHost);
+			return u;
+		}
+
+		Url.prototype.parse = function(url, parseQueryString, slashesDenoteHost) {
+		  if (!util.isString(url)) {
+		    throw new TypeError("Parameter 'url' must be a string, not " + typeof url);
+		  }
+
+		  // Copy chrome, IE, opera backslash-handling behavior.
+		  // Back slashes before the query string get converted to forward slashes
+		  // See: https://code.google.com/p/chromium/issues/detail?id=25916
+		  var queryIndex = url.indexOf('?'),
+		      splitter =
+		          (queryIndex !== -1 && queryIndex < url.indexOf('#')) ? '?' : '#',
+		      uSplit = url.split(splitter),
+		      slashRegex = /\\/g;
+		  uSplit[0] = uSplit[0].replace(slashRegex, '/');
+		  url = uSplit.join(splitter);
+		  var rest = url;
+
+		  // trim before proceeding.
+		  // This is to support parse stuff like "  http://foo.com  \n"
+		  rest = rest.trim();
+
+		  if (!slashesDenoteHost && url.split('#').length === 1) {
+		    // Try fast path regexp
+		    var simplePath = simplePathPattern.exec(rest);
+		    if (simplePath) {
+		      this.path = rest;
+		      this.href = rest;
+		      this.pathname = simplePath[1];
+		      if (simplePath[2]) {
+		        this.search = simplePath[2];
+		        if (parseQueryString) {
+		          this.query = querystring.parse(this.search.substr(1));
+		        } else {
+		          this.query = this.search.substr(1);
+		        }
+		      } else if (parseQueryString) {
+		        this.search = '';
+		        this.query = {};
+		      }
+		      return this;
+		    }
+		  }
+
+		  var proto = protocolPattern.exec(rest);
+		  if (proto) {
+		    proto = proto[0];
+		    var lowerProto = proto.toLowerCase();
+		    this.protocol = lowerProto;
+		    rest = rest.substr(proto.length);
+		  }
+
+		  // figure out if it's got a host
+		  // user@server is *always* interpreted as a hostname, and url
+		  // resolution will treat //foo/bar as host=foo,path=bar because that's
+		  // how the browser resolves relative URLs.
+		  if (slashesDenoteHost || proto || rest.match(/^\/\/[^@\/]+@[^@\/]+/)) {
+		    var slashes = rest.substr(0, 2) === '//';
+		    if (slashes && !(proto && hostlessProtocol[proto])) {
+		      rest = rest.substr(2);
+		      this.slashes = true;
+		    }
+		  }
+
+		  if (!hostlessProtocol[proto] &&
+		      (slashes || (proto && !slashedProtocol[proto]))) {
+
+		    // there's a hostname.
+		    // the first instance of /, ?, ;, or # ends the host.
+		    //
+		    // If there is an @ in the hostname, then non-host chars *are* allowed
+		    // to the left of the last @ sign, unless some host-ending character
+		    // comes *before* the @-sign.
+		    // URLs are obnoxious.
+		    //
+		    // ex:
+		    // http://a@b@c/ => user:a@b host:c
+		    // http://a@b?@c => user:a host:c path:/?@c
+
+		    // v0.12 TODO(isaacs): This is not quite how Chrome does things.
+		    // Review our test case against browsers more comprehensively.
+
+		    // find the first instance of any hostEndingChars
+		    var hostEnd = -1;
+		    for (var i = 0; i < hostEndingChars.length; i++) {
+		      var hec = rest.indexOf(hostEndingChars[i]);
+		      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
+		        hostEnd = hec;
+		    }
+
+		    // at this point, either we have an explicit point where the
+		    // auth portion cannot go past, or the last @ char is the decider.
+		    var auth, atSign;
+		    if (hostEnd === -1) {
+		      // atSign can be anywhere.
+		      atSign = rest.lastIndexOf('@');
+		    } else {
+		      // atSign must be in auth portion.
+		      // http://a@b/c@d => host:b auth:a path:/c@d
+		      atSign = rest.lastIndexOf('@', hostEnd);
+		    }
+
+		    // Now we have a portion which is definitely the auth.
+		    // Pull that off.
+		    if (atSign !== -1) {
+		      auth = rest.slice(0, atSign);
+		      rest = rest.slice(atSign + 1);
+		      this.auth = decodeURIComponent(auth);
+		    }
+
+		    // the host is the remaining to the left of the first non-host char
+		    hostEnd = -1;
+		    for (var i = 0; i < nonHostChars.length; i++) {
+		      var hec = rest.indexOf(nonHostChars[i]);
+		      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
+		        hostEnd = hec;
+		    }
+		    // if we still have not hit it, then the entire thing is a host.
+		    if (hostEnd === -1)
+		      hostEnd = rest.length;
+
+		    this.host = rest.slice(0, hostEnd);
+		    rest = rest.slice(hostEnd);
+
+		    // pull out port.
+		    this.parseHost();
+
+		    // we've indicated that there is a hostname,
+		    // so even if it's empty, it has to be present.
+		    this.hostname = this.hostname || '';
+
+		    // if hostname begins with [ and ends with ]
+		    // assume that it's an IPv6 address.
+		    var ipv6Hostname = this.hostname[0] === '[' &&
+		        this.hostname[this.hostname.length - 1] === ']';
+
+		    // validate a little.
+		    if (!ipv6Hostname) {
+		      var hostparts = this.hostname.split(/\./);
+		      for (var i = 0, l = hostparts.length; i < l; i++) {
+		        var part = hostparts[i];
+		        if (!part) continue;
+		        if (!part.match(hostnamePartPattern)) {
+		          var newpart = '';
+		          for (var j = 0, k = part.length; j < k; j++) {
+		            if (part.charCodeAt(j) > 127) {
+		              // we replace non-ASCII char with a temporary placeholder
+		              // we need this to make sure size of hostname is not
+		              // broken by replacing non-ASCII by nothing
+		              newpart += 'x';
+		            } else {
+		              newpart += part[j];
+		            }
+		          }
+		          // we test again with ASCII char only
+		          if (!newpart.match(hostnamePartPattern)) {
+		            var validParts = hostparts.slice(0, i);
+		            var notHost = hostparts.slice(i + 1);
+		            var bit = part.match(hostnamePartStart);
+		            if (bit) {
+		              validParts.push(bit[1]);
+		              notHost.unshift(bit[2]);
+		            }
+		            if (notHost.length) {
+		              rest = '/' + notHost.join('.') + rest;
+		            }
+		            this.hostname = validParts.join('.');
+		            break;
+		          }
+		        }
+		      }
+		    }
+
+		    if (this.hostname.length > hostnameMaxLen) {
+		      this.hostname = '';
+		    } else {
+		      // hostnames are always lower case.
+		      this.hostname = this.hostname.toLowerCase();
+		    }
+
+		    if (!ipv6Hostname) {
+		      // IDNA Support: Returns a punycoded representation of "domain".
+		      // It only converts parts of the domain name that
+		      // have non-ASCII characters, i.e. it doesn't matter if
+		      // you call it with a domain that already is ASCII-only.
+		      //this.hostname = punycode.toASCII(this.hostname);
+		    }
+
+		    var p = this.port ? ':' + this.port : '';
+		    var h = this.hostname || '';
+		    this.host = h + p;
+		    this.href += this.host;
+
+		    // strip [ and ] from the hostname
+		    // the host field still retains them, though
+		    if (ipv6Hostname) {
+		      this.hostname = this.hostname.substr(1, this.hostname.length - 2);
+		      if (rest[0] !== '/') {
+		        rest = '/' + rest;
+		      }
+		    }
+		  }
+
+		  // now rest is set to the post-host stuff.
+		  // chop off any delim chars.
+		  if (!unsafeProtocol[lowerProto]) {
+
+		    // First, make 100% sure that any "autoEscape" chars get
+		    // escaped, even if encodeURIComponent doesn't think they
+		    // need to be.
+		    for (var i = 0, l = autoEscape.length; i < l; i++) {
+		      var ae = autoEscape[i];
+		      if (rest.indexOf(ae) === -1)
+		        continue;
+		      var esc = encodeURIComponent(ae);
+		      if (esc === ae) {
+		        esc = escape(ae);
+		      }
+		      rest = rest.split(ae).join(esc);
+		    }
+		  }
+
+
+		  // chop off from the tail first.
+		  var hash = rest.indexOf('#');
+		  if (hash !== -1) {
+		    // got a fragment string.
+		    this.hash = rest.substr(hash);
+		    rest = rest.slice(0, hash);
+		  }
+		  var qm = rest.indexOf('?');
+		  if (qm !== -1) {
+		    this.search = rest.substr(qm);
+		    this.query = rest.substr(qm + 1);
+		    if (parseQueryString) {
+		      this.query = querystring.parse(this.query);
+		    }
+		    rest = rest.slice(0, qm);
+		  } else if (parseQueryString) {
+		    // no query string, but parseQueryString still requested
+		    this.search = '';
+		    this.query = {};
+		  }
+		  if (rest) this.pathname = rest;
+		  if (slashedProtocol[lowerProto] &&
+		      this.hostname && !this.pathname) {
+		    this.pathname = '/';
+		  }
+
+		  //to support http.request
+		  if (this.pathname || this.search) {
+		    var p = this.pathname || '';
+		    var s = this.search || '';
+		    this.path = p + s;
+		  }
+
+		  // finally, reconstruct the href based on what has been validated.
+		  this.href = this.format();
+		  return this;
+		};
+
+		// format a parsed object into a url string
+		function urlFormat(obj) {
+		  // ensure it's an object, and not a string url.
+		  // If it's an obj, this is a no-op.
+		  // this way, you can call url_format() on strings
+		  // to clean up potentially wonky urls.
+		  if (util.isString(obj)) obj = urlParse(obj);
+		  if (!(obj instanceof Url)) return Url.prototype.format.call(obj);
+		  return obj.format();
+		}
+
+		Url.prototype.format = function() {
+		  var auth = this.auth || '';
+		  if (auth) {
+		    auth = encodeURIComponent(auth);
+		    auth = auth.replace(/%3A/i, ':');
+		    auth += '@';
+		  }
+
+		  var protocol = this.protocol || '',
+		      pathname = this.pathname || '',
+		      hash = this.hash || '',
+		      host = false,
+		      query = '';
+
+		  if (this.host) {
+		    host = auth + this.host;
+		  } else if (this.hostname) {
+		    host = auth + (this.hostname.indexOf(':') === -1 ?
+		        this.hostname :
+		        '[' + this.hostname + ']');
+		    if (this.port) {
+		      host += ':' + this.port;
+		    }
+		  }
+
+		  if (this.query &&
+		      util.isObject(this.query) &&
+		      Object.keys(this.query).length) {
+		    query = querystring.stringify(this.query);
+		  }
+
+		  var search = this.search || (query && ('?' + query)) || '';
+
+		  if (protocol && protocol.substr(-1) !== ':') protocol += ':';
+
+		  // only the slashedProtocols get the //.  Not mailto:, xmpp:, etc.
+		  // unless they had them to begin with.
+		  if (this.slashes ||
+		      (!protocol || slashedProtocol[protocol]) && host !== false) {
+		    host = '//' + (host || '');
+		    if (pathname && pathname.charAt(0) !== '/') pathname = '/' + pathname;
+		  } else if (!host) {
+		    host = '';
+		  }
+
+		  if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
+		  if (search && search.charAt(0) !== '?') search = '?' + search;
+
+		  pathname = pathname.replace(/[?#]/g, function(match) {
+		    return encodeURIComponent(match);
+		  });
+		  search = search.replace('#', '%23');
+
+		  return protocol + host + pathname + search + hash;
+		};
+
+		function urlResolve(source, relative) {
+		  return urlParse(source, false, true).resolve(relative);
+		}
+
+		Url.prototype.resolve = function(relative) {
+		  return this.resolveObject(urlParse(relative, false, true)).format();
+		};
+
+		function urlResolveObject(source, relative) {
+		  if (!source) return relative;
+		  return urlParse(source, false, true).resolveObject(relative);
+		}
+
+		Url.prototype.resolveObject = function(relative) {
+		  if (util.isString(relative)) {
+		    var rel = new Url();
+		    rel.parse(relative, false, true);
+		    relative = rel;
+		  }
+		  var result = new Url();
+		  var tkeys = Object.keys(this);
+		  for (var tk = 0; tk < tkeys.length; tk++) {
+		    var tkey = tkeys[tk];
+		    result[tkey] = this[tkey];
+		  }
+
+		  // hash is always overridden, no matter what.
+		  // even href="" will remove it.
+		  result.hash = relative.hash;
+
+		  // if the relative url is empty, then there's nothing left to do here.
+		  if (relative.href === '') {
+		    result.href = result.format();
+		    return result;
+		  }
+
+		  // hrefs like //foo/bar always cut to the protocol.
+		  if (relative.slashes && !relative.protocol) {
+		    // take everything except the protocol from relative
+		    var rkeys = Object.keys(relative);
+		    for (var rk = 0; rk < rkeys.length; rk++) {
+		      var rkey = rkeys[rk];
+		      if (rkey !== 'protocol')
+		        result[rkey] = relative[rkey];
+		    }
+
+		    //urlParse appends trailing / to urls like http://www.example.com
+		    if (slashedProtocol[result.protocol] &&
+		        result.hostname && !result.pathname) {
+		      result.path = result.pathname = '/';
+		    }
+
+		    result.href = result.format();
+		    return result;
+		  }
+
+		  if (relative.protocol && relative.protocol !== result.protocol) {
+		    // if it's a known url protocol, then changing
+		    // the protocol does weird things
+		    // first, if it's not file:, then we MUST have a host,
+		    // and if there was a path
+		    // to begin with, then we MUST have a path.
+		    // if it is file:, then the host is dropped,
+		    // because that's known to be hostless.
+		    // anything else is assumed to be absolute.
+		    if (!slashedProtocol[relative.protocol]) {
+		      var keys = Object.keys(relative);
+		      for (var v = 0; v < keys.length; v++) {
+		        var k = keys[v];
+		        result[k] = relative[k];
+		      }
+		      result.href = result.format();
+		      return result;
+		    }
+
+		    result.protocol = relative.protocol;
+		    if (!relative.host && !hostlessProtocol[relative.protocol]) {
+		      var relPath = (relative.pathname || '').split('/');
+		      while (relPath.length && !(relative.host = relPath.shift()));
+		      if (!relative.host) relative.host = '';
+		      if (!relative.hostname) relative.hostname = '';
+		      if (relPath[0] !== '') relPath.unshift('');
+		      if (relPath.length < 2) relPath.unshift('');
+		      result.pathname = relPath.join('/');
+		    } else {
+		      result.pathname = relative.pathname;
+		    }
+		    result.search = relative.search;
+		    result.query = relative.query;
+		    result.host = relative.host || '';
+		    result.auth = relative.auth;
+		    result.hostname = relative.hostname || relative.host;
+		    result.port = relative.port;
+		    // to support http.request
+		    if (result.pathname || result.search) {
+		      var p = result.pathname || '';
+		      var s = result.search || '';
+		      result.path = p + s;
+		    }
+		    result.slashes = result.slashes || relative.slashes;
+		    result.href = result.format();
+		    return result;
+		  }
+
+		  var isSourceAbs = (result.pathname && result.pathname.charAt(0) === '/'),
+		      isRelAbs = (
+		          relative.host ||
+		          relative.pathname && relative.pathname.charAt(0) === '/'
+		      ),
+		      mustEndAbs = (isRelAbs || isSourceAbs ||
+		                    (result.host && relative.pathname)),
+		      removeAllDots = mustEndAbs,
+		      srcPath = result.pathname && result.pathname.split('/') || [],
+		      relPath = relative.pathname && relative.pathname.split('/') || [],
+		      psychotic = result.protocol && !slashedProtocol[result.protocol];
+
+		  // if the url is a non-slashed url, then relative
+		  // links like ../.. should be able
+		  // to crawl up to the hostname, as well.  This is strange.
+		  // result.protocol has already been set by now.
+		  // Later on, put the first path part into the host field.
+		  if (psychotic) {
+		    result.hostname = '';
+		    result.port = null;
+		    if (result.host) {
+		      if (srcPath[0] === '') srcPath[0] = result.host;
+		      else srcPath.unshift(result.host);
+		    }
+		    result.host = '';
+		    if (relative.protocol) {
+		      relative.hostname = null;
+		      relative.port = null;
+		      if (relative.host) {
+		        if (relPath[0] === '') relPath[0] = relative.host;
+		        else relPath.unshift(relative.host);
+		      }
+		      relative.host = null;
+		    }
+		    mustEndAbs = mustEndAbs && (relPath[0] === '' || srcPath[0] === '');
+		  }
+
+		  if (isRelAbs) {
+		    // it's absolute.
+		    result.host = (relative.host || relative.host === '') ?
+		                  relative.host : result.host;
+		    result.hostname = (relative.hostname || relative.hostname === '') ?
+		                      relative.hostname : result.hostname;
+		    result.search = relative.search;
+		    result.query = relative.query;
+		    srcPath = relPath;
+		    // fall through to the dot-handling below.
+		  } else if (relPath.length) {
+		    // it's relative
+		    // throw away the existing file, and take the new path instead.
+		    if (!srcPath) srcPath = [];
+		    srcPath.pop();
+		    srcPath = srcPath.concat(relPath);
+		    result.search = relative.search;
+		    result.query = relative.query;
+		  } else if (!util.isNullOrUndefined(relative.search)) {
+		    // just pull out the search.
+		    // like href='?foo'.
+		    // Put this after the other two cases because it simplifies the booleans
+		    if (psychotic) {
+		      result.hostname = result.host = srcPath.shift();
+		      //occationaly the auth can get stuck only in host
+		      //this especialy happens in cases like
+		      //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
+		      var authInHost = result.host && result.host.indexOf('@') > 0 ?
+		                       result.host.split('@') : false;
+		      if (authInHost) {
+		        result.auth = authInHost.shift();
+		        result.host = result.hostname = authInHost.shift();
+		      }
+		    }
+		    result.search = relative.search;
+		    result.query = relative.query;
+		    //to support http.request
+		    if (!util.isNull(result.pathname) || !util.isNull(result.search)) {
+		      result.path = (result.pathname ? result.pathname : '') +
+		                    (result.search ? result.search : '');
+		    }
+		    result.href = result.format();
+		    return result;
+		  }
+
+		  if (!srcPath.length) {
+		    // no path at all.  easy.
+		    // we've already handled the other stuff above.
+		    result.pathname = null;
+		    //to support http.request
+		    if (result.search) {
+		      result.path = '/' + result.search;
+		    } else {
+		      result.path = null;
+		    }
+		    result.href = result.format();
+		    return result;
+		  }
+
+		  // if a url ENDs in . or .., then it must get a trailing slash.
+		  // however, if it ends in anything else non-slashy,
+		  // then it must NOT get a trailing slash.
+		  var last = srcPath.slice(-1)[0];
+		  var hasTrailingSlash = (
+		      (result.host || relative.host || srcPath.length > 1) &&
+		      (last === '.' || last === '..') || last === '');
+
+		  // strip single dots, resolve double dots to parent dir
+		  // if the path tries to go above the root, `up` ends up > 0
+		  var up = 0;
+		  for (var i = srcPath.length; i >= 0; i--) {
+		    last = srcPath[i];
+		    if (last === '.') {
+		      srcPath.splice(i, 1);
+		    } else if (last === '..') {
+		      srcPath.splice(i, 1);
+		      up++;
+		    } else if (up) {
+		      srcPath.splice(i, 1);
+		      up--;
+		    }
+		  }
+
+		  // if the path is allowed to go above the root, restore leading ..s
+		  if (!mustEndAbs && !removeAllDots) {
+		    for (; up--; up) {
+		      srcPath.unshift('..');
+		    }
+		  }
+
+		  if (mustEndAbs && srcPath[0] !== '' &&
+		      (!srcPath[0] || srcPath[0].charAt(0) !== '/')) {
+		    srcPath.unshift('');
+		  }
+
+		  if (hasTrailingSlash && (srcPath.join('/').substr(-1) !== '/')) {
+		    srcPath.push('');
+		  }
+
+		  var isAbsolute = srcPath[0] === '' ||
+		      (srcPath[0] && srcPath[0].charAt(0) === '/');
+
+		  // put the host back
+		  if (psychotic) {
+		    result.hostname = result.host = isAbsolute ? '' :
+		                                    srcPath.length ? srcPath.shift() : '';
+		    //occationaly the auth can get stuck only in host
+		    //this especialy happens in cases like
+		    //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
+		    var authInHost = result.host && result.host.indexOf('@') > 0 ?
+		                     result.host.split('@') : false;
+		    if (authInHost) {
+		      result.auth = authInHost.shift();
+		      result.host = result.hostname = authInHost.shift();
+		    }
+		  }
+
+		  mustEndAbs = mustEndAbs || (result.host && srcPath.length);
+
+		  if (mustEndAbs && !isAbsolute) {
+		    srcPath.unshift('');
+		  }
+
+		  if (!srcPath.length) {
+		    result.pathname = null;
+		    result.path = null;
+		  } else {
+		    result.pathname = srcPath.join('/');
+		  }
+
+		  //to support request.http
+		  if (!util.isNull(result.pathname) || !util.isNull(result.search)) {
+		    result.path = (result.pathname ? result.pathname : '') +
+		                  (result.search ? result.search : '');
+		  }
+		  result.auth = relative.auth || result.auth;
+		  result.slashes = result.slashes || relative.slashes;
+		  result.href = result.format();
+		  return result;
+		};
+
+		Url.prototype.parseHost = function() {
+		  var host = this.host;
+		  var port = portPattern.exec(host);
+		  if (port) {
+		    port = port[0];
+		    if (port !== ':') {
+		      this.port = port.substr(1);
+		    }
+		    host = host.substr(0, host.length - port.length);
+		  }
+		  if (host) this.hostname = host;
+		};
+
+		return {
+			parse: urlParse,
+			resolve: urlResolve,
+			resolveObject: urlResolveObject,
+			format: urlFormat,
+			Url: Url
+		}
+	}])
+
+    .service('atlasUtil', ['atlasGlobalConfig', 'atlasUrl', function(atlasGlobalConfig, atlasUrl) {
         /* Date and time utility functions. */
         var dateUtil = {
             /**
@@ -120,6 +1037,9 @@ angular.module('atlas.sdk', [
 
 				return err;
 			},
+			urlParse: function urlParse(url) {
+    			return atlasUrl.parse(url);
+  			}
         }
         return util;
 
@@ -156,144 +1076,140 @@ angular.module('atlas.sdk', [
         var expiryWindow = this.expiryWindow = 15;
 
         this.$get = ['atlasUtil', 'atlasSecurityTokenService', function (atlasUtil, atlasSecurityTokenService) {
-            return new atlasCredentialsFactory();
+            return {
+                create: createAbstract,
+                createWebIdentityCredentials: createWebIdentityCredentials,
+            }
 
-            function atlasCredentialsFactory () {
-                return {
-                    create: create,
-                    createWebIdentityCredentials: createWebIdentityCredentials,
+            function createAbstract() {
+                var credentials = {
+                    /* (Integer) the window size in seconds to attempt refreshing of
+                     * credentials before the expireTime occurs
+                     */
+                    expiryWindow: expiryWindow,
+                    /* (void) Gets the existing credentials, refreshing them if they
+                     * are not yet loaded or have expired. Users should call
+                     * this method before using refresh(), as this will not
+                     * attempt to reload credentials when they are already
+                     * loaded into the object.
+                     */
+                    get : get,
+                    /*
+                     * (Boolean) Returns whether the credentials object should call refresh()
+                     */
+                    needsRefresh: needsRefresh,
+                    /*
+                     * (void) Refreshes the credentials. Users should call get() before
+                     * attempting to forcibly refresh credentials.
+                     */
+                    refresh: refresh,
+                };
+                /* (Boolean) Returns whether the credentials have been expired and require a refresh. */
+                credentials.expired = false;
+                /* (Date) Returns a time when credentials should be considered expired. */
+                credentials.expireTime = null;
+
+                if (arguments.length === 1 && typeof arguments[0] === 'object') {
+                    var arg = arguments[0];
+                    /* (String) — the atlas access key ID */
+                    credentials.accessKeyId = arg.accessKeyId;
+                    /* (String) — the atlas secret access key */
+                    credentials.secretAccessKey = arg.secretAccessKey;
+                    /* (String) — the optional atlas session token */
+                    credentials.sessionToken = arg.sessionToken;
                 }
+                else {
+                    credentials.accessKeyId = arguments[0];
+                    credentials.secretAccessKey = arguments[1];
+                    credentials.sessionToken = arguments[2];
+                }
+                return credentials;
 
-                function create() {
-                    var credentials = {
-                        /* (Integer) the window size in seconds to attempt refreshing of
-                         * credentials before the expireTime occurs
-                         */
-                        expiryWindow: expiryWindow,
-                        /* (void) Gets the existing credentials, refreshing them if they
-                         * are not yet loaded or have expired. Users should call
-                         * this method before using refresh(), as this will not
-                         * attempt to reload credentials when they are already
-                         * loaded into the object.
-                         */
-                        get : get,
-                        /*
-                         * (Boolean) Returns whether the credentials object should call refresh()
-                         */
-                        needsRefresh: needsRefresh,
-                        /*
-                         * (void) Refreshes the credentials. Users should call get() before
-                         * attempting to forcibly refresh credentials.
-                         */
-                        refresh: refresh,
-                    };
-                    /* (Boolean) Returns whether the credentials have been expired and require a refresh. */
-                    credentials.expired = false;
-                    /* (Date) Returns a time when credentials should be considered expired. */
-                    credentials.expireTime = null;
 
-                    if (arguments.length === 1 && typeof arguments[0] === 'object') {
-                        var arg = arguments[0];
-                        /* (String) — the atlas access key ID */
-                        credentials.accessKeyId = arg.accessKeyId;
-                        /* (String) — the atlas secret access key */
-                        credentials.secretAccessKey = arg.secretAccessKey;
-                        /* (String) — the optional atlas session token */
-                        credentials.sessionToken = arg.sessionToken;
+                function get(callback) {
+                    if (this.needsRefresh()) {
+                        this.refresh(function(err) {
+                            if (!err) {
+                                this.expired = false; // reset expired flag
+                            }
+                            if (callback) callback(err);
+                        });
                     }
-                    else {
-                        credentials.accessKeyId = arguments[0];
-                        credentials.secretAccessKey = arguments[1];
-                        credentials.sessionToken = arguments[2];
-                    }
-                    return credentials;
-
-
-                    function get(callback) {
-                        if (this.needsRefresh()) {
-                            this.refresh(function(err) {
-                                if (!err) {
-                                    this.expired = false; // reset expired flag
-                                }
-                                if (callback) callback(err);
-                            });
-                        }
-                        else if (callback) {
-                            callback();
-                        }
-                    }
-
-                    function needsRefresh() {
-                        var currentTime = atlasUtil.date.getDate().getTime();
-                        var adjustedTime = new Date(currentTime + this.expiryWindow * 1000);
-                        if (this.expireTime && adjustedTime > this.expireTime) {
-                            return true;
-                        }
-                        else {
-                            return this.expired || !this.accessKeyId || !this.secretAccessKey;
-                        }
-                    }
-
-                    function refresh(callback) {
-                        this.expired = false;
+                    else if (callback) {
                         callback();
                     }
                 }
 
-                /**
-                  * Creates a new credentials object.
-                  * @param (see atlasSecurityTokenService.assumeRoleWithWebIdentity)
-                  * @example Creating a new credentials object
-                  *   atlasGlobalConfig.credentials = atlasCredentialsFactory.createWebIdentityCredentials({
-                  *     RoleArn: 'arn:atlas:iam::<ATLAS_ACCOUNT_ID>:role/<WEB_IDENTITY_ROLE_NAME>',
-                  *     WebIdentityToken: 'ACCESS_TOKEN',       // token from identity service
-                  *     RoleSessionName: 'web'                  // optional name, defaults to web-identity
-                  *   });
-                  * @see atlasSecurityTokenService.assumeRoleWithWebIdentity
-                  */
-                function createWebIdentityCredentials(params) {
-                    if (typeof params === 'object') {
-                        var credentials = create(params);
-                        credentials.expired = true;
-                        credentials.params = params;
-                        credentials.params.RoleSessionName = credentials.params.RoleSessionName || 'web-identity';
-                        credentials.data = null;
-                        credentials.refresh = refresh;
-                        credentials.createClients = createClients;
-                        return credentials;
+                function needsRefresh() {
+                    var currentTime = atlasUtil.date.getDate().getTime();
+                    var adjustedTime = new Date(currentTime + this.expiryWindow * 1000);
+                    if (this.expireTime && adjustedTime > this.expireTime) {
+                        return true;
                     }
-                    throw 'Trying to create WebIdentityCredentials without params';
-
-                    /** Refreshes credentials using atlasSecurityTokenService.assumeRoleWithWebIdentity
-                     * @callback callback function(err)
-                     *      Called when the STS service responds (or fails). When
-                     *      this callback is called with no error, it means that the credentials
-                     *      information has been loaded into the object (as the `accessKeyId`,
-                     *      `secretAccessKey`, and `sessionToken` properties).
-                     *      @param err [Error] if an error occurred, this value will be filled
-                     */
-                    function refresh(callback) {
-                        var self = this;
-                        self.createClients();
-                        if (!callback)
-                            callback = function(err) { if (err) throw err; };
-                        self.service.assumeRoleWithWebIdentity(function (err, data) {
-                            if (!err) {
-                                self.expired = false;
-                                self.data = data;
-                                self.service.credentialsFrom(data, self);
-                            }
-                            else {
-                                self.data = null;
-                            }
-                            callback(err);
-                        });
+                    else {
+                        return this.expired || !this.accessKeyId || !this.secretAccessKey;
                     }
+                }
+
+                function refresh(callback) {
+                    this.expired = false;
+                    callback();
+                }
+            }
+
+            /**
+              * Creates a new credentials object.
+              * @param (see atlasSecurityTokenService.assumeRoleWithWebIdentity)
+              * @example Creating a new credentials object
+              *   atlasGlobalConfig.credentials = atlasCredentialsFactory.createWebIdentityCredentials({
+              *     RoleArn: 'arn:atlas:iam::<ATLAS_ACCOUNT_ID>:role/<WEB_IDENTITY_ROLE_NAME>',
+              *     WebIdentityToken: 'ACCESS_TOKEN',       // token from identity service
+              *     RoleSessionName: 'web'                  // optional name, defaults to web-identity
+              *   });
+              * @see atlasSecurityTokenService.assumeRoleWithWebIdentity
+              */
+            function createWebIdentityCredentials(params) {
+                if (typeof params === 'object') {
+                    var credentials = createAbstract(params);
+                    credentials.expired = true;
+                    credentials.params = params;
+                    credentials.params.RoleSessionName = credentials.params.RoleSessionName || 'web-identity';
+                    credentials.data = null;
+                    credentials.refresh = refresh;
+                    credentials.createClients = createClients;
+                    return credentials;
+                }
+                throw 'Trying to create WebIdentityCredentials without params';
+
+                /** Refreshes credentials using atlasSecurityTokenService.assumeRoleWithWebIdentity
+                 * @callback callback function(err)
+                 *      Called when the STS service responds (or fails). When
+                 *      this callback is called with no error, it means that the credentials
+                 *      information has been loaded into the object (as the `accessKeyId`,
+                 *      `secretAccessKey`, and `sessionToken` properties).
+                 *      @param err [Error] if an error occurred, this value will be filled
+                 */
+                function refresh(callback) {
+                    var self = this;
+                    self.createClients();
+                    if (!callback)
+                        callback = function(err) { if (err) throw err; };
+                    self.service.assumeRoleWithWebIdentity(function (err, data) {
+                        if (!err) {
+                            self.expired = false;
+                            self.data = data;
+                            self.service.credentialsFrom(data, self);
+                        }
+                        else {
+                            self.data = null;
+                        }
+                        callback(err);
+                    });
+                }
 
 
-                    function createClients() {
-                        this.service = this.service || atlasSecurityTokenService({params: this.params});
-                    }
+                function createClients() {
+                    this.service = this.service || atlasSecurityTokenService({params: this.params});
                 }
             }
         }];
@@ -301,19 +1217,20 @@ angular.module('atlas.sdk', [
 
     .factory('atlasRegionConfig', ['atlasUtil', function(atlasUtil) {
         var regionConfig = { /* from region_config.json */
-            rules: {},
+            rules: {
+				'*/*': {
+					endpoint: 'atlasv5.azurewebsites.net/{service}'
+				},
+				'ias2server/*': {
+					endpoint: 'ias2server/{service}'
+				},
+			},
             patterns: {}
         };
         return configureEndpoint;
 
         function configureEndpoint(service) {
             service.isGlobalEndpoint = false;
-            applyConfig(service, {
-                endpoint: '',
-
-            });
-			return;
-            /***************/
             var keys = derivedKeys(service);
             for (var i = 0; i < keys.length; i++) {
                 var key = keys[i];
@@ -326,7 +1243,8 @@ angular.module('atlas.sdk', [
                     // set global endpoint
                     service.isGlobalEndpoint = !!config.globalEndpoint;
                     // signature version
-                    if (!config.signatureVersion) config.signatureVersion = 'v4';
+                    if (!config.signatureVersion)
+						config.signatureVersion = 'v4';
                     // merge config
                     applyConfig(service, config);
                 }
@@ -359,6 +1277,8 @@ angular.module('atlas.sdk', [
         }
 
         function applyConfig(service, config) {
+			if (!service.config)
+				service.config = {};
             atlasUtil.each(config, function(key, value) {
                 if (key === 'globalEndpoint') return;
                 if (service.config[key] === undefined || service.config[key] === null) {
@@ -368,7 +1288,39 @@ angular.module('atlas.sdk', [
         }
     }])
 
-	.factory('atlasServiceFactory', ['atlasUtil', 'atlasGlobalConfig', 'atlasRegionConfig', function(atlasUtil, atlasGlobalConfig, atlasRegionConfig) {
+	.factory('atlasEndpointFactory', ['atlasUtil', 'atlasGlobalConfig', function(atlasUtil, atlasGlobalConfig) {
+		/**
+		 * Constructs a new endpoint given an endpoint URL. If the
+		 * URL omits a protocol (http or https), the default protocol
+		 * set in the global {atlasConfig} will be used.
+		 *
+		 */
+		return function create(endpoint, config) {
+			if (typeof endpoint === 'undefined' || endpoint === null) {
+				throw new Error('Invalid endpoint: ' + endpoint);
+			}
+			else if (typeof endpoint !== 'string') {
+				return angular.extend({}, endpoint);
+			}
+
+			if (!endpoint.match(/^http/)) {
+				var useSSL = config && config.sslEnabled !== undefined ? config.sslEnabled : atlasGlobalConfig.sslEnabled;
+				endpoint = (useSSL ? 'https' : 'http') + '://' + endpoint;
+			}
+			var instance = atlasUtil.urlParse(endpoint);
+
+			// Ensure the port property is set as an integer
+			if (instance.port) {
+				instance.port = parseInt(instance.port, 10);
+			}
+			else {
+				instance.port = instance.protocol === 'https:' ? 443 : 80;
+			}
+			return instance;
+		};
+	}])
+
+	.factory('atlasServiceFactory', ['atlasUtil', 'atlasGlobalConfig', 'atlasRegionConfig', 'atlasEndpointFactory', function(atlasUtil, atlasGlobalConfig, atlasRegionConfig, atlasEndpointFactory) {
         var _serviceMap = {};
         /* The service class representing an atlas service. */
 		var emptyService = {
@@ -443,12 +1395,6 @@ angular.module('atlas.sdk', [
             throttledError: function throttledError(error) {
                 throw 'throttledError: Not implemented!';
             },
-            endpointFromTemplate: function endpointFromTemplate(endpoint) {
-                throw 'endpointFromTemplate: Not implemented!';
-            },
-            setEndpoint: function setEndpoint(endpoint) {
-                throw 'setEndpoint: Not implemented!';
-            },
             paginationConfig: function paginationConfig(operation, throwException) {
                 throw 'paginationConfig: Not implemented!';
             },
@@ -497,11 +1443,23 @@ angular.module('atlas.sdk', [
 			var svcConfig = atlasGlobalConfig[instance.serviceIdentifier];
 			instance.config = angular.extend({}, atlasGlobalConfig, svcConfig, config);
 			instance.validateService();
-			if (!instance.config.endpoint)
+			if (!instance.config.endpoint) {
 				atlasRegionConfig(instance);
+			}
+			resolveTemplatedEndpoint(instance);
+			instance.endpoint = atlasEndpointFactory(instance.config.endpoint, instance.config);
+			console.log(instance.endpoint)
+		}
 
-			//instance.config.endpoint = instance.endpointFromTemplate(instance.config.endpoint);
-			//instance.setEndpoint(instance.config.endpoint);
+		function resolveTemplatedEndpoint(instance) {
+			var endpoint = instance.config.endpoint;
+			if (typeof endpoint !== 'string') return;
+
+			var e = endpoint;
+		    e = e.replace(/\{service\}/g, instance.api.endpointPrefix);
+		    e = e.replace(/\{region\}/g, instance.config.region);
+		    e = e.replace(/\{scheme\}/g, instance.config.sslEnabled ? 'https' : 'http');
+			instance.config.endpoint = e;
 		}
 
         /**
@@ -520,8 +1478,8 @@ angular.module('atlas.sdk', [
                 features = versions;
                 versions = [];
             }
-            var svc = atlasUtil.inherit(emptyService, features || {});
-
+            //var svc = angular.extend({}, emptyService, features || {});
+			var svc = create(features || {});
             if (typeof serviceIdentifier === 'string') {
                 addVersions(svc, versions);
                 var identifier = svc.serviceIdentifier || serviceIdentifier;
@@ -903,39 +1861,39 @@ angular.module('atlas.sdk', [
 				//	'versions': [],
 				//},
 				'identity': {
-					'name': 'Identity Service',
+					'name': 'atlasIdentity',
 					'versions': [ '5.0' ],
 				},
 				'appsettings': {
-					'name': 'Application Settings Service',
+					'name': 'atlasAppsettings',
 					'versions': [ '5.0' ],
 				},
 				'orgmodel': {
-					'name': 'Organizational Model Service',
+					'name': 'atlasOrgmodel',
 					'versions': [ '5.0' ],
 				},
 				'case': {
-					'name': 'Case Service',
+					'name': 'atlasCase',
 					'versions': [ '5.0' ],
 				},
 				'task': {
-					'name': 'Human Task Service',
+					'name': 'atlasTask',
 					'versions': [ '5.0' ],
 				},
 				'cmis': {
-					'name': 'Content Management Service',
+					'name': 'atlasCmis',
 					'versions': [ '5.0' ],
 				},
 				'template': {
-					'name': 'Template Service',
+					'name': 'atlasTemplate',
 					'versions': [ '5.0' ],
 				},
 				'rule': {
-					'name': 'Business Rule Service',
+					'name': 'atlasRule',
 					'versions': [ '5.0' ],
 				},
 				'data': {
-					'name': 'Business Data Service',
+					'name': 'atlasData',
 					'versions': [ '5.0' ],
 				},
 			},
@@ -1245,7 +2203,9 @@ angular.module('atlas.sdk', [
 			atlasApiLoader.services.forEach(function(identifier) {
 				var name = atlasApiLoader.serviceName(identifier);
 				var versions = atlasApiLoader.serviceVersions(identifier);
-				this[name] = atlas.service.defineService(identifier, versions);
+				atlas[name] = function(settings) {
+					return atlas.service.defineService(identifier, versions);
+				}
 				// load any customizations from lib/services/<svcidentifier>.js
 				//var svcFile = path.join(__dirname, 'services', identifier + '.js');
 				//if (fs.existsSync(svcFile)) require('./services/' + identifier);
