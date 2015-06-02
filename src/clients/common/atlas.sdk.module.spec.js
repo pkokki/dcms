@@ -504,7 +504,7 @@ describe('atlas.appSettings', function() {
         };
     }));
 
-    describe('endpoint', function() {
+    xdescribe('endpoint', function() {
         it('sets region to azure when unspecified', function() {
             var svc = atlas.atlasAppsettings({ region: undefined });
             expect(svc.config.region).toEqual('azure');

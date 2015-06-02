@@ -1448,7 +1448,6 @@ angular.module('atlas.sdk', [
 			}
 			resolveTemplatedEndpoint(instance);
 			instance.endpoint = atlasEndpointFactory(instance.config.endpoint, instance.config);
-			console.log(instance.endpoint)
 		}
 
 		function resolveTemplatedEndpoint(instance) {
