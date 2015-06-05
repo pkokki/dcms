@@ -3,6 +3,53 @@ describe('sdk', function() {
         expect(true).toBeTruthy();
     });
 
+    describe('atlasLogin', function() {
+        beforeEach(module('atlassdk'));
+
+        it('should get/set client id', inject(function(atlasLogin) {
+            atlasLogin.setClientId('123');
+
+            expect(atlasLogin.getClientId()).toEqual('123');
+        }));
+
+        it('should fail to get client id if not set', inject(function(atlasLogin) {
+            var foo = function() {
+                atlasLogin.getClientId();
+            };
+            expect(foo).toThrow();
+        }));
+
+        it('should fail to set invalid client id', inject(function(atlasLogin) {
+            var foo = function(id) {
+                return function() {
+                    atlasLogin.setClientId(id);
+                }
+            };
+            expect(foo(null)).toThrow();
+            expect(foo(123)).toThrow();
+            expect(foo(true)).toThrow();
+            expect(foo(undefined)).toThrow();
+        }));
+
+        it('should fail to authorize if client id is not set', inject(function(atlasLogin) {
+            var foo = function() {
+                atlasLogin.authorize({}, '');
+            };
+            expect(foo).toThrowError(/client id is not set/);
+        }));
+
+        it('should fail to authorize with wrong number of parameters', inject(function(atlasLogin) {
+            var foo0 = function() { atlasLogin.authorize(); };
+            var foo1 = function() { atlasLogin.authorize({}); };
+            var foo3 = function() { atlasLogin.authorize({}, '', ''); };
+
+            atlasLogin.setClientId('id');
+            expect(foo0).toThrowError(/expects two arguments/);
+            expect(foo1).toThrowError(/expects two arguments/);
+            expect(foo3).toThrowError(/expects two arguments/);
+        }));
+    });
+
     describe('atlasConfig', function() {
         beforeEach(module('atlassdk', function() {
         }));
@@ -115,8 +162,8 @@ describe('sdk', function() {
             expect(promise.catch).toBeDefined();
             expect(promise.finally).toBeDefined();
         }));
-    });
 
+    });
 
     describe('atlasProvider', function() {
         var provider;
@@ -161,7 +208,10 @@ describe('sdk', function() {
 
     describe('atlas', function() {
         var atlas = null;
-        beforeEach(module('atlassdk'));
+        //beforeEach(module('atlassdk'));
+        beforeEach(module('atlassdk', function($provide) {
+            $provide.constant('atlasServiceTypes', {'svc1': { operations: { op1: {}, op2: {} } }, 'svc2': {}});
+        }));
         beforeEach(inject(function($injector) {
             atlas = $injector.get('atlas');
         }));
@@ -180,10 +230,49 @@ describe('sdk', function() {
             });
 
             it('should have initial service-specific default values', function() {
-                assertDefaultValues(atlas.appsettings.config);
-                assertDefaultValues(atlas.identity.config);
+                assertDefaultValues(atlas.svc1().config);
+                assertDefaultValues(atlas.svc2().config);
+            });
+
+            it('should support global credentials', function() {
+                atlas.config.credentials = { x: 123 };
+
+                expect(atlas.config.credentials).toEqual({ x: 123 });
+            });
+
+            it('should propagate global credentials in new services', function() {
+                atlas.config.credentials = { x: 123 };
+
+                var service = atlas.svc1();
+                expect(service.config.credentials).toEqual({ x: 123 });
+            });
+            it('should override global credentials with service credentials', function() {
+                atlas.config.credentials = { x: 123 };
+
+                var service = atlas.svc1({ credentials: { y: 'abc' } });
+
+                expect(service.config.credentials).toEqual({ y: 'abc' });
+            });
+            it('should update global credentials after creation', function() {
+                atlas.config.credentials = { role: 123 };
+
+                var service = atlas.svc1();
+                atlas.config.credentials.role = 567;
+                atlas.config.credentials.token = 345;
+
+                expect(service.config.credentials).toEqual({ role: 567, token: 345 });
+            });
+            it('should update service credentials after creation (if using global credentials)', function() {
+                atlas.config.credentials = { role: 123 };
+
+                var service = atlas.svc1();
+                expect(service.config.credentials).toEqual({ role: 123 });
+
+                atlas.config.credentials.role = 567;
+                expect(service.config.credentials).toEqual({ role: 567 });
             });
         });
+
 
         describe('examples', function() {
             function preamble() {
