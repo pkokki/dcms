@@ -14,8 +14,6 @@ angular.module('atlassdk', [
     })
 
     .factory('atlasLoginWindow', ['$window', function atlasLoginWindow($window) {
-        var IDS_SCHEME = 'https';
-        var IDS_SCHEME = 'https';
         var _win = null;
 
         var service = {
