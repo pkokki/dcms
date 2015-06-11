@@ -48,6 +48,83 @@ describe('sdk', function() {
             expect(foo1).toThrowError(/expects two arguments/);
             expect(foo3).toThrowError(/expects two arguments/);
         }));
+
+        it('should fail to authorize if options is not an object', inject(function(atlasLogin) {
+            var foo1 = function() { atlasLogin.authorize('options', ''); };
+            var foo2 = function() { atlasLogin.authorize(123, ''); };
+
+            atlasLogin.setClientId('id');
+            expect(foo1).toThrowError(/authorize expects options parameter to be an object/);
+            expect(foo2).toThrowError(/authorize expects options parameter to be an object/);
+        }));
+        it('should fail to authorize if next is not function or string', inject(function(atlasLogin) {
+            var foo1 = function() { atlasLogin.authorize(null, {}); };
+            var foo2 = function() { atlasLogin.authorize(null, 123); };
+
+            atlasLogin.setClientId('id');
+            expect(foo1).toThrowError(/authorize expects next parameter to be/);
+            expect(foo2).toThrowError(/authorize expects next parameter to be/);
+        }));
+        it('should fail to authorize if wrong options are passed', inject(function(atlasLogin) {
+            var foo1 = function() { atlasLogin.authorize({ response_type: null }, ''); };
+            var foo2 = function() { atlasLogin.authorize({ response_type: 123 }, ''); };
+            var foo3 = function() { atlasLogin.authorize({ scope: null }, ''); };
+            var foo4 = function() { atlasLogin.authorize({}, ''); };
+            var foo5 = function() { atlasLogin.authorize({ scope: 123 }, ''); };
+            var foo6 = function() { atlasLogin.authorize({ scope:'profile', response_mode: null }, ''); };
+            var foo7 = function() { atlasLogin.authorize({ scope:'profile', response_mode: 123 }, ''); };
+            var foo8 = function() { atlasLogin.authorize({ scope:'profile', response_mode: 'token', direct_post_uri: null }, ''); };
+            var foo9 = function() { atlasLogin.authorize({ scope:'profile', response_mode: 'token', direct_post_uri: 123 }, ''); };
+            var foo10 = function() { atlasLogin.authorize({ scope:'profile', response_mode: 'token', direct_post_uri: 'http://...', interactive: 'unknown' }, ''); };
+
+            atlasLogin.setClientId('id');
+
+            expect(foo1).toThrowError(/missing options.response_type/);
+            expect(foo2).toThrowError(/expected options.response_type to be a string/);
+            expect(foo3).toThrowError(/missing options.scope/);
+            expect(foo4).toThrowError(/missing options.scope/);
+            expect(foo5).toThrowError(/expected options.scope to be a string or array/);
+            expect(foo6).toThrowError(/missing options.response_mode/);
+            expect(foo7).toThrowError(/expected options.response_mode to be a string/);
+            expect(foo8).toThrowError(/missing options.direct_post_uri/);
+            expect(foo9).toThrowError(/expected options.direct_post_uri to be a string/);
+            expect(foo10).toThrowError(/expected options.interactive to be one of/);
+        }));
+        it('should fail to authorize if next if function and popup is false', inject(function(atlasLogin) {
+            var next = function() {};
+            var foo = function() { atlasLogin.authorize({ popup:false, scope:'profile', response_mode: 'token', direct_post_uri: 'http://...' }, next); };
+
+            atlasLogin.setClientId('id');
+            expect(foo).toThrowError(/next must be redirect URI if options.popup is not true/);
+
+        }));
+        describe('$window', function() {
+            var $window;
+
+            beforeEach(function() {
+                $window = {
+                    location: {
+                        replace: jasmine.createSpy()
+                    },
+                    encodeURIComponent: jasmine.createSpy().and.callFake(function(key) { return key; })
+                };
+
+                module(function($provide) {
+                    $provide.value('$window', $window);
+                });
+            });
+
+            it('should replace window location with http://atlasV5.azurewebsites.net/id, if options.popup is false', inject(function(atlasLogin) {
+                atlasLogin.setClientId('id');
+                atlasLogin.authorize({
+                    popup: false,
+                    scope: 'profile',
+                    response_mode: 'token',
+                    direct_post_uri: 'http://...'
+                }, 'next');
+                expect($window.location.replace.calls.argsFor(0)[0]).toMatch(/http:\/\/atlasV5\.azurewebsites\.net\/id.*/);
+            }));
+        });
     });
 
     describe('atlasConfig', function() {
